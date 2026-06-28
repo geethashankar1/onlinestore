@@ -12,16 +12,21 @@ pipeline {
 
     stages {
 
-        // ── 1. Lint ───────────────────────────────────────────────
+        // ── 1. Lint (runs inside PHP Docker image — no PHP needed in Jenkins) ───
         stage('PHP Lint') {
             steps {
                 sh '''
-                    echo "Checking PHP syntax..."
-                    ERROR=0
-                    for f in $(find my_eshop -name "*.php"); do
-                        php -l "$f" || ERROR=1
-                    done
-                    [ $ERROR -eq 0 ] && echo "All PHP files OK." || exit 1
+                    docker run --rm \
+                        -v "$WORKSPACE:/app" \
+                        -w /app \
+                        php:8.3-cli \
+                        sh -c '
+                            ERROR=0
+                            for f in $(find my_eshop -name "*.php"); do
+                                php -l "$f" || ERROR=1
+                            done
+                            [ $ERROR -eq 0 ] && echo "All PHP files OK." || exit 1
+                        '
                 '''
             }
         }
