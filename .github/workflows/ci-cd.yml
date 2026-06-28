@@ -117,6 +117,9 @@ jobs:
             set -e
             cd /opt/eshop
 
+            # Load .env variables (GHCR_USER, GHCR_PAT etc.)
+            set -a && source /opt/eshop/.env && set +a
+
             # Authenticate to ghcr.io using the deploy token stored on the server
             echo "$GHCR_PAT" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
