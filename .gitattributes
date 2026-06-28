@@ -1,0 +1,13 @@
+# Normalize line endings: store as LF in git, check out as-is on Windows.
+* text=auto eol=lf
+
+# Shell scripts must always be LF (bash will break on CRLF)
+*.sh text eol=lf
+
+# Binary files — do not touch
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary

@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Pass the Authorization header through to PHP (needed for Bearer tokens)
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Route anything that is not a real file/dir to the front controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]

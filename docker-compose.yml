@@ -1,0 +1,49 @@
+services:
+  web:
+    build: .
+    container_name: eshop_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./my_eshop:/var/www/html      # live code; remove this line to run the baked image only
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER:-eshop}
+      DB_PASS: ${DB_PASS:-eshop_pass}
+      DB_NAME: ${DB_NAME:-ecommerce_db}
+      # Authorize.Net (leave blank to disable card-payment tab)
+      AUTHNET_LOGIN_ID:   ${AUTHNET_LOGIN_ID:-}
+      AUTHNET_TRANS_KEY:  ${AUTHNET_TRANS_KEY:-}
+      AUTHNET_CLIENT_KEY: ${AUTHNET_CLIENT_KEY:-}
+      AUTHNET_SANDBOX:    ${AUTHNET_SANDBOX:-true}
+      # Razorpay (leave blank to disable UPI/Wallet tab)
+      RAZORPAY_KEY_ID:     ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_CURRENCY:   ${RAZORPAY_CURRENCY:-INR}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    container_name: eshop_db
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-ecommerce_db}
+      MYSQL_USER: ${DB_USER:-eshop}
+      MYSQL_PASSWORD: ${DB_PASS:-eshop_pass}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-root_pass}
+    ports:
+      - "3307:3306"                   # optional: lets you connect a GUI client to localhost:3306
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASS:-root_pass}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:

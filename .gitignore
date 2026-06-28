@@ -1,0 +1,31 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env / secrets (never commit real credentials)
+.env
+.env.prod
+
+# User-uploaded product images — keep the folder + guards, ignore the rest
+my_eshop/uploads/*
+!my_eshop/uploads/.htaccess
+!my_eshop/uploads/.gitkeep
+!my_eshop/uploads/default_placeholder.png
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs / local db volume / certbot data
+*.log
+db_data/
+certbot/
+
+# The ssl.conf has YOUR_DOMAIN substituted at runtime — track the template only
+# (nginx/ssl.conf IS tracked; the generated default.conf after ssl-init is not)
+
+# Node / build artefacts (if frontend tooling is added later)
+node_modules/
+dist/
