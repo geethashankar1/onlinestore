@@ -1,0 +1,69 @@
+# docker-compose.staging.yml
+# Staging environment — port 8080, separate DB.
+# Mirrors production but uses staging-specific env vars.
+#
+# Required .env variables (same /opt/eshop/.env file):
+#   WEB_IMAGE, STAGING_DB_NAME, STAGING_DB_USER, STAGING_DB_PASS, STAGING_DB_ROOT_PASS
+
+services:
+
+  # ── Staging Nginx (HTTP only on port 8080) ────────────────────
+  nginx_staging:
+    image: nginx:1.27-alpine
+    container_name: eshop_nginx_staging
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/staging.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web_staging
+
+  # ── Staging PHP / Apache app ──────────────────────────────────
+  web_staging:
+    image: ${WEB_IMAGE:-ghcr.io/geethashankar1/onlinestore:latest}
+    container_name: eshop_web_staging
+    restart: unless-stopped
+    expose:
+      - "80"
+    environment:
+      DB_HOST: db_staging
+      DB_USER: ${STAGING_DB_USER:-eshop_staging}
+      DB_PASS: ${STAGING_DB_PASS:-Eshop@Staging2024}
+      DB_NAME: ${STAGING_DB_NAME:-ecommerce_db_staging}
+      AUTHNET_LOGIN_ID:    ${AUTHNET_LOGIN_ID:-}
+      AUTHNET_TRANS_KEY:   ${AUTHNET_TRANS_KEY:-}
+      AUTHNET_CLIENT_KEY:  ${AUTHNET_CLIENT_KEY:-}
+      AUTHNET_SANDBOX:     "true"           # always sandbox in staging
+      RAZORPAY_KEY_ID:     ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_CURRENCY:   ${RAZORPAY_CURRENCY:-INR}
+    volumes:
+      - uploads_staging:/var/www/html/uploads
+    depends_on:
+      db_staging:
+        condition: service_healthy
+
+  # ── Staging MySQL ─────────────────────────────────────────────
+  db_staging:
+    image: mysql:8.0
+    container_name: eshop_db_staging
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_DATABASE:      ${STAGING_DB_NAME:-ecommerce_db_staging}
+      MYSQL_USER:          ${STAGING_DB_USER:-eshop_staging}
+      MYSQL_PASSWORD:      ${STAGING_DB_PASS:-Eshop@Staging2024}
+      MYSQL_ROOT_PASSWORD: ${STAGING_DB_ROOT_PASS:-Root@Staging2024}
+    volumes:
+      - db_staging_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_staging_data:
+  uploads_staging:

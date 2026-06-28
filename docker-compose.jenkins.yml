@@ -1,0 +1,33 @@
+# docker-compose.jenkins.yml
+# Runs Jenkins on port 8090 with Docker access so it can build images
+# and deploy both staging and production on the same host.
+#
+# First-time start:
+#   docker compose -f docker-compose.jenkins.yml up -d
+#   docker exec eshop_jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk21
+    container_name: eshop_jenkins
+    restart: unless-stopped
+    user: root                    # needed to access the Docker socket
+    ports:
+      - "8090:8080"               # Jenkins UI at http://SERVER_IP:8090
+      - "50000:50000"             # Jenkins agent port
+    environment:
+      JAVA_OPTS: "-Xmx512m -Xms256m"   # limit RAM on the 1 GB droplet
+    volumes:
+      - jenkins_data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock   # Docker-outside-of-Docker
+      - /usr/bin/docker:/usr/bin/docker             # Docker CLI
+      - /opt/eshop:/opt/eshop                       # compose files + .env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  jenkins_data:
