@@ -55,11 +55,13 @@ pipeline {
             when { branch 'develop' }
             steps {
                 sh '''
+                    set +x
                     set -a && . /opt/eshop/.env && set +a
-                    docker compose -f "$COMPOSE_STAGE" pull web
+                    set -x
+                    docker compose -f "$COMPOSE_STAGE" pull web_staging
                     docker compose -f "$COMPOSE_STAGE" up -d --remove-orphans
                     docker image prune -f
-                    echo "Staging deployed: http://64.227.187.60:8080"
+                    echo "Staging deployed: http://64.227.187.60:8090"
                 '''
             }
         }
@@ -69,7 +71,9 @@ pipeline {
             when { branch 'main' }
             steps {
                 sh '''
+                    set +x
                     set -a && . /opt/eshop/.env && set +a
+                    set -x
                     docker compose -f "$COMPOSE_PROD" pull web
                     docker compose -f "$COMPOSE_PROD" up -d --remove-orphans
                     docker image prune -f
