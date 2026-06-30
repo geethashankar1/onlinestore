@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS users (
   username   VARCHAR(50)   NOT NULL,
   email      VARCHAR(255)  NOT NULL,
   password   VARCHAR(255)  NOT NULL,            -- password_hash() output (bcrypt $2y$)
+  role       ENUM('super_admin','seller','customer') NOT NULL DEFAULT 'customer',
   created_at TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_username (username),
@@ -97,11 +98,10 @@ CREATE TABLE IF NOT EXISTS wishlist (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
--- Seed an admin account so the /admin pages work immediately.
+-- Seed a super_admin account so the /admin pages work immediately.
 --   Login:    admin@example.com  (or username: admin)
 --   Password: admin123           <-- CHANGE THIS in production
---   id = 1 also satisfies login.php's admin check.
 -- ---------------------------------------------------------------------------
-INSERT INTO users (id, username, email, password) VALUES
-  (1, 'admin', 'admin@example.com', '$2y$10$wyoBMAiihzJxR9tghOc7.uYWVrz/d4xu.tndujV8QXcz6Sn9QQWoW')
+INSERT INTO users (id, username, email, password, role) VALUES
+  (1, 'admin', 'admin@example.com', '$2y$10$wyoBMAiihzJxR9tghOc7.uYWVrz/d4xu.tndujV8QXcz6Sn9QQWoW', 'super_admin')
 ON DUPLICATE KEY UPDATE username = VALUES(username);

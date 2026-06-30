@@ -55,7 +55,7 @@ pipeline {
             when { branch 'develop' }
             steps {
                 sh '''
-                    set -a && source /opt/eshop/.env && set +a
+                    set -a && . /opt/eshop/.env && set +a
                     docker compose -f "$COMPOSE_STAGE" pull web
                     docker compose -f "$COMPOSE_STAGE" up -d --remove-orphans
                     docker image prune -f
@@ -69,7 +69,7 @@ pipeline {
             when { branch 'main' }
             steps {
                 sh '''
-                    set -a && source /opt/eshop/.env && set +a
+                    set -a && . /opt/eshop/.env && set +a
                     docker compose -f "$COMPOSE_PROD" pull web
                     docker compose -f "$COMPOSE_PROD" up -d --remove-orphans
                     docker image prune -f
