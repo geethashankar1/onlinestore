@@ -4,6 +4,8 @@
 #   WEB_IMAGE, DB_NAME, DB_USER, DB_PASS, DB_ROOT_PASS
 #   AUTHNET_* and RAZORPAY_* (optional — payment gateways)
 
+name: eshop_prod
+
 services:
 
   # ── Nginx reverse proxy + SSL termination ────────────────────
