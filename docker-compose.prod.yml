@@ -94,6 +94,10 @@ services:
 
 volumes:
   db_data:
+    name: eshop_db_data
   uploads_data:
+    name: eshop_uploads_data
   certbot_www:
+    name: eshop_certbot_www
   certbot_conf:
+    name: eshop_certbot_conf

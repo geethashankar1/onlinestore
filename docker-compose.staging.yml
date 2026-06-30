@@ -76,4 +76,6 @@ services:
 
 volumes:
   db_staging_data:
+    name: eshop_staging_db_staging_data
   uploads_staging:
+    name: eshop_staging_uploads_staging
