@@ -59,7 +59,7 @@ pipeline {
                     docker compose -f "$COMPOSE_STAGE" pull web
                     docker compose -f "$COMPOSE_STAGE" up -d --remove-orphans
                     docker image prune -f
-                    echo "Staging deployed: http://64.227.187.60:8080"
+                    echo "Staging deployed: http://64.227.187.60:8090"
                 '''
             }
         }
