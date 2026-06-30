@@ -15,7 +15,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($email_or_username) || empty($password)) {
         $message = "<div class='alert alert-danger'>Email/Username and Password are required.</div>";
     } else {
-        $stmt = $conn->prepare("SELECT id, username, email, password FROM users WHERE email = ? OR username = ?");
+        $stmt = $conn->prepare("SELECT id, username, email, password, role FROM users WHERE email = ? OR username = ?");
         if ($stmt) {
             $stmt->bind_param("ss", $email_or_username, $email_or_username);
             $stmt->execute();
@@ -28,11 +28,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['user_id'] = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['email'] = $user['email'];
-                    // Example: Check if admin (you might have a 'role' column in users table)
-                    // For simplicity, let's assume user with ID 1 is admin, or specific username
-                    if ($user['username'] === 'admin' || $user['id'] === 1) { // Adjust admin check as needed
-                        $_SESSION['is_admin'] = true;
-                    }
+                    $_SESSION['role'] = $user['role'];
+                    // Kept for backward compatibility during the role migration —
+                    // header.php and admin/* still read is_admin until Phase 4.
+                    $_SESSION['is_admin'] = in_array($user['role'], ['seller', 'super_admin'], true);
 
                     header("Location: index.php"); // Redirect to home page or dashboard
                     exit;
