@@ -12,6 +12,7 @@ services:
     image: nginx:1.27-alpine
     container_name: eshop_nginx_staging
     restart: unless-stopped
+    mem_limit: 32m
     ports:
       - "8080:80"
     volumes:
@@ -24,6 +25,7 @@ services:
     image: ${WEB_IMAGE:-ghcr.io/geethashankar1/onlinestore:latest}
     container_name: eshop_web_staging
     restart: unless-stopped
+    mem_limit: 128m
     expose:
       - "80"
     environment:
@@ -49,7 +51,13 @@ services:
     image: mysql:8.0
     container_name: eshop_db_staging
     restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
+    mem_limit: 200m
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --innodb-buffer-pool-size=48M
+      --innodb-log-buffer-size=8M
+      --performance-schema=OFF
+      --table-open-cache=128
     environment:
       MYSQL_DATABASE:      ${STAGING_DB_NAME:-ecommerce_db_staging}
       MYSQL_USER:          ${STAGING_DB_USER:-eshop_staging}
