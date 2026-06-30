@@ -60,6 +60,7 @@ pipeline {
                     set -x
                     docker compose -f "$COMPOSE_STAGE" pull web_staging
                     docker compose -f "$COMPOSE_STAGE" up -d --remove-orphans
+                    docker exec eshop_nginx_staging nginx -s reload
                     docker image prune -f
                     echo "Staging deployed: http://64.227.187.60:8080"
                 '''
@@ -76,6 +77,7 @@ pipeline {
                     set -x
                     docker compose -f "$COMPOSE_PROD" pull web
                     docker compose -f "$COMPOSE_PROD" up -d --remove-orphans
+                    docker exec eshop_nginx nginx -s reload
                     docker image prune -f
                     echo "Production deployed: https://myeshopstore.online"
                 '''
