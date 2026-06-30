@@ -5,6 +5,8 @@
 # Required .env variables (same /opt/eshop/.env file):
 #   WEB_IMAGE, STAGING_DB_NAME, STAGING_DB_USER, STAGING_DB_PASS, STAGING_DB_ROOT_PASS
 
+name: eshop_staging
+
 services:
 
   # ── Staging Nginx (HTTP only on port 8080) ────────────────────
