@@ -41,6 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($password !== $confirm)
         $field_errors['confirm'] = 'Passwords do not match.';
 
+    $account_type = ($_POST['account_type'] ?? 'customer') === 'seller' ? 'seller' : 'customer';
+
     if (empty($field_errors)) {
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmt->bind_param('ss', $username, $email);
@@ -49,11 +51,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "<div class='alert alert-danger'>Username or email already taken.</div>";
         } else {
             $hash  = password_hash($password, PASSWORD_DEFAULT);
-            $stmt2 = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-            $stmt2->bind_param('sss', $username, $email, $hash);
+            $stmt2 = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
+            $stmt2->bind_param('ssss', $username, $email, $hash, $account_type);
             if ($stmt2->execute()) {
+                if ($account_type === 'seller') {
+                    // Log them in immediately and send to store setup
+                    $_SESSION['user_id']  = $stmt2->insert_id;
+                    $_SESSION['username'] = $username;
+                    $_SESSION['email']    = $email;
+                    $_SESSION['role']     = 'seller';
+                    $_SESSION['is_admin'] = true;
+                    header('Location: seller/setup.php'); exit;
+                }
                 $message = "<div class='alert alert-success'>Registration successful! You can now <a href='login.php'>login</a>.</div>";
-                $old = []; // clear fields on success
+                $old = [];
             } else {
                 $message = "<div class='alert alert-danger'>Registration failed. Please try again.</div>";
             }
@@ -98,6 +109,23 @@ include 'header.php';
         <?php echo $message; ?>
 
         <form action="register.php" method="post" id="registerForm" novalidate>
+
+          <!-- Account type -->
+          <div class="mb-4">
+            <label class="form-label">I want to…</label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="account_type" id="typeCustomer"
+                       value="customer" <?php echo (($_POST['account_type']??'customer')==='customer')?'checked':''; ?>>
+                <label class="form-check-label" for="typeCustomer">Shop as a customer</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="account_type" id="typeSeller"
+                       value="seller" <?php echo (($_POST['account_type']??'')==='seller')?'checked':''; ?>>
+                <label class="form-check-label" for="typeSeller">Sell on this platform</label>
+              </div>
+            </div>
+          </div>
 
           <!-- Username -->
           <div class="mb-3">

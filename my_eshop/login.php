@@ -24,17 +24,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($result->num_rows == 1) {
                 $user = $result->fetch_assoc();
                 if (password_verify($password, $user['password'])) {
-                    // Password is correct, set session variables
-                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['user_id']  = $user['id'];
                     $_SESSION['username'] = $user['username'];
-                    $_SESSION['email'] = $user['email'];
-                    $_SESSION['role'] = $user['role'];
-                    // Kept for backward compatibility during the role migration —
-                    // header.php and admin/* still read is_admin until Phase 4.
+                    $_SESSION['email']    = $user['email'];
+                    $_SESSION['role']     = $user['role'];
                     $_SESSION['is_admin'] = in_array($user['role'], ['seller', 'super_admin'], true);
 
-                    header("Location: index.php"); // Redirect to home page or dashboard
-                    exit;
+                    if ($user['role'] === 'seller') {
+                        header("Location: seller/dashboard.php"); exit;
+                    } elseif ($user['role'] === 'super_admin') {
+                        header("Location: admin/manage_products.php"); exit;
+                    }
+                    header("Location: index.php"); exit;
                 } else {
                     $message = "<div class='alert alert-danger'>Invalid email/username or password.</div>";
                 }

@@ -28,11 +28,19 @@ $logged_in  = isset($_SESSION['user_id']);
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse justify-content-end" id="siteNav">
         <ul class="navbar-nav align-items-lg-center gap-lg-4 mt-3 mt-lg-0">
-        <?php if ($nav_mode === 'admin'): ?>
+        <?php if ($nav_mode === 'seller'): ?>
+          <li class="nav-item"><a class="nav-link-x" href="/seller/dashboard.php">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link-x" href="/seller/add_product.php">Add Product</a></li>
+          <li class="nav-item"><a class="nav-link-x" href="/seller/products.php">Products</a></li>
+          <li class="nav-item"><a class="nav-link-x" href="/seller/orders.php">Orders</a></li>
+          <li class="nav-item"><a class="nav-link-x" href="/seller/settings.php">Settings</a></li>
+          <li class="nav-item mt-2 mt-lg-0"><a class="nav-link-x" href="/logout.php">Logout</a></li>
+        <?php elseif ($nav_mode === 'admin'): ?>
           <li class="nav-item"><a class="nav-link-x" href="/index.php">View Shop</a></li>
           <li class="nav-item"><a class="nav-link-x" href="/admin/add_product.php">Add Product</a></li>
           <li class="nav-item"><a class="nav-link-x" href="/admin/manage_products.php">Manage Products</a></li>
           <li class="nav-item"><a class="nav-link-x" href="/admin/view_orders.php">View Orders</a></li>
+          <li class="nav-item"><a class="nav-link-x" href="/admin/stores.php">Stores</a></li>
           <li class="nav-item mt-2 mt-lg-0"><a class="nav-link-x" href="/logout.php">Logout</a></li>
         <?php else: ?>
           <li class="nav-item"><a class="nav-link-x" href="/index.php">Home</a></li>
