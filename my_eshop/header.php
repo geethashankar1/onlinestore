@@ -1,18 +1,22 @@
 <?php
 // header.php — shared top layout. Include AFTER config/db.php (session already started).
 // Optional vars a page may set before including: $page_title (string), $nav_mode ('shop'|'admin').
-$page_title = isset($page_title) ? $page_title : 'My E-Shop';
-$nav_mode   = isset($nav_mode) ? $nav_mode : 'shop';
-$cart_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
-$is_admin   = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
-$logged_in  = isset($_SESSION['user_id']);
+$page_title  = isset($page_title)  ? $page_title  : 'My E-Shop';
+$nav_mode    = isset($nav_mode)    ? $nav_mode    : 'shop';
+$brand_name  = isset($brand_name)  ? $brand_name  : 'My E&#8209;Shop';
+$brand_logo  = isset($brand_logo)  ? $brand_logo  : '';   // URL string or empty
+$brand_color = isset($brand_color) ? $brand_color : '';   // hex or empty
+$cart_count  = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
+$is_admin    = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
+$logged_in   = isset($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?php echo htmlspecialchars($page_title); ?> · My E-Shop</title>
+<title><?php echo htmlspecialchars($page_title); ?></title>
+<?php if ($brand_color): ?><style>:root{--accent:<?php echo htmlspecialchars($brand_color); ?>;}</style><?php endif; ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +28,13 @@ $logged_in  = isset($_SESSION['user_id']);
   <div class="announce">Complimentary shipping on orders over $75 — handpicked, made to last</div>
   <div class="nav-shell">
     <nav class="navbar navbar-expand-lg container py-3">
-      <a class="brand" href="/index.php">My E&#8209;Shop <span class="dot"></span><?php if ($nav_mode === 'admin'): ?> <small>Admin</small><?php endif; ?></a>
+      <a class="brand" href="<?php echo ($nav_mode==='seller') ? '/seller/dashboard.php' : '/index.php'; ?>">
+        <?php if ($brand_logo): ?>
+          <img src="<?php echo htmlspecialchars($brand_logo); ?>" alt="<?php echo htmlspecialchars(strip_tags($brand_name)); ?>"
+               style="height:36px;width:36px;object-fit:cover;border-radius:50%;margin-right:8px;vertical-align:middle;">
+        <?php endif; ?>
+        <?php echo $brand_name; ?> <span class="dot"></span><?php if ($nav_mode === 'admin'): ?> <small>Admin</small><?php endif; ?>
+      </a>
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse justify-content-end" id="siteNav">
         <ul class="navbar-nav align-items-lg-center gap-lg-4 mt-3 mt-lg-0">

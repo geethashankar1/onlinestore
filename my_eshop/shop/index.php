@@ -1,103 +1,129 @@
 <?php
-// shop/index.php — public storefront for a specific seller store.
-// URL: /shop/{slug}  ->  /shop/index.php?slug={slug}  (via .htaccess)
+// shop/index.php — public storefront for a specific seller.
+// URL: /shop/{slug}  (via shop/.htaccess rewrite)
 require_once '../config/db.php';
 require_once '../config/store.php';
 
 if (!$active_store) {
     http_response_code(404);
+    $page_title = 'Store Not Found';
     include '../header.php';
-    echo '<section class="page"><div class="container"><div class="alert alert-danger mt-5">Store not found.</div></div></section>';
+    echo '<section class="page"><div class="container"><div class="alert alert-danger mt-5">This store does not exist or is not active.</div></div></section>';
     include '../footer.php';
-    exit;
+    $conn->close(); exit;
 }
 
 $store_id = (int)$active_store['id'];
+$slug     = $active_store['slug'];
 
-// Store products
-$stmt = $conn->prepare(
-    "SELECT id, name, description, price, image FROM products WHERE store_id = ? ORDER BY created_at DESC"
-);
-$stmt->bind_param('i', $store_id);
-$stmt->execute();
-$products = $stmt->get_result();
-$stmt->close();
+// Search within this store's products
+$search_term = '';
+if (isset($_GET['search'])) {
+    $search_term = $conn->real_escape_string(trim($_GET['search']));
+}
 
-$page_title = htmlspecialchars($active_store['name']);
+// Fetch products scoped to this store
+$sql = "SELECT id, name, price, image, description FROM products WHERE store_id = $store_id";
+if ($search_term !== '') {
+    $sql .= " AND (name LIKE '%$search_term%' OR description LIKE '%$search_term%')";
+}
+$sql .= " ORDER BY created_at DESC";
+$result = $conn->query($sql);
+
+// Pass branding to header.php
+$page_title  = htmlspecialchars($active_store['name']);
+$brand_name  = htmlspecialchars($active_store['name']);
 $brand_color = htmlspecialchars($active_store['primary_color']);
+$brand_logo  = !empty($active_store['logo'])
+               ? '/uploads/stores/' . htmlspecialchars($active_store['logo'])
+               : '';
+
+include '../header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?php echo $page_title; ?></title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/theme.css">
-<style>
-  .store-header{background:<?php echo $brand_color; ?>;color:#fff;padding:3rem 1rem;text-align:center;}
-  .store-header h1{font-size:2.2rem;font-weight:700;margin:0;}
-  .store-logo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3);margin-bottom:1rem;}
-</style>
-</head>
-<body>
-<div class="app-shell">
 
-  <!-- Store header / branding -->
-  <div class="store-header">
-    <?php if (!empty($active_store['logo'])): ?>
-      <img src="/uploads/stores/<?php echo htmlspecialchars($active_store['logo']); ?>"
-           class="store-logo" alt="<?php echo $page_title; ?> logo">
-    <?php endif; ?>
-    <h1><?php echo $page_title; ?></h1>
-    <?php if (!empty($active_store['description'])): ?>
-      <p class="mt-2 mb-0" style="opacity:.85;"><?php echo htmlspecialchars($active_store['description']); ?></p>
-    <?php endif; ?>
-  </div>
-
-  <main>
-    <section class="page">
-      <div class="container">
-        <?php if ($products->num_rows === 0): ?>
-          <p class="text-center mt-5" style="color:var(--muted);">No products listed yet. Check back soon!</p>
-        <?php else: ?>
-        <div class="row g-4 mt-2">
-          <?php while ($p = $products->fetch_assoc()): ?>
-          <div class="col-6 col-md-4 col-lg-3">
-            <a href="/product.php?id=<?php echo $p['id']; ?>&store=<?php echo htmlspecialchars($active_store['slug']); ?>"
-               class="product-card">
-              <?php
-              $img = (!empty($p['image']) && file_exists('../uploads/'.$p['image']))
-                     ? '/uploads/'.htmlspecialchars($p['image'])
-                     : '/uploads/default_placeholder.png';
-              ?>
-              <div class="product-img-wrap">
-                <img src="<?php echo $img; ?>" alt="<?php echo htmlspecialchars($p['name']); ?>">
-              </div>
-              <div class="product-info">
-                <div class="product-name"><?php echo htmlspecialchars($p['name']); ?></div>
-                <div class="product-price">₹<?php echo number_format($p['price'], 2); ?></div>
-              </div>
-            </a>
+  <!-- Hero — same structure as index.php but seller-branded -->
+  <section class="hero">
+    <div class="container">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-6">
+          <div class="eyebrow reveal d1"><?php echo htmlspecialchars($active_store['name']); ?></div>
+          <h1 class="mt-3 reveal d2">
+            <?php echo !empty($active_store['description'])
+                       ? htmlspecialchars($active_store['description'])
+                       : 'Quality diecast cars,<br>handpicked for collectors.'; ?>
+          </h1>
+          <hr class="rule my-4 reveal d2">
+          <p class="lead-x reveal d3">Browse the full catalogue below.</p>
+          <div class="d-flex flex-wrap gap-3 mt-4 reveal d3">
+            <a href="#products" class="btn">Shop the collection</a>
           </div>
-          <?php endwhile; ?>
+        </div>
+        <div class="col-lg-6">
+          <div class="hero-figure reveal d3">
+            <?php if ($brand_logo): ?>
+              <img src="<?php echo $brand_logo; ?>"
+                   alt="<?php echo htmlspecialchars($active_store['name']); ?>"
+                   style="width:100%;max-height:420px;object-fit:contain;">
+            <?php else: ?>
+              <img src="https://placehold.co/760x560/2A382E/C9B891?text=<?php echo urlencode($active_store['name']); ?>" alt="Store banner">
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products — identical markup to index.php -->
+  <section id="products" class="page pt-2">
+    <div class="container">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4 page-head">
+        <div>
+          <div class="eyebrow">The catalogue</div>
+          <h2 class="mb-0">Products</h2>
+        </div>
+        <form method="GET" action="/shop/<?php echo $slug; ?>" class="search-wrap" style="max-width:420px;width:100%;">
+          <div class="input-group">
+            <input type="text" name="search" class="form-control" placeholder="Search products…"
+                   value="<?php echo htmlspecialchars($search_term); ?>">
+            <button type="submit" class="btn">Search</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="row g-4">
+        <?php
+        if ($result && $result->num_rows > 0):
+            while ($row = $result->fetch_assoc()):
+                $img = (!empty($row['image']) && file_exists('../uploads/' . $row['image']))
+                       ? '/uploads/' . htmlspecialchars($row['image'])
+                       : '/uploads/default_placeholder.png';
+        ?>
+        <div class="col-12 col-sm-6 col-lg-4">
+          <article class="product-card">
+            <a href="/product.php?id=<?php echo $row['id']; ?>&store=<?php echo $slug; ?>" class="pc-img d-block">
+              <img src="<?php echo $img; ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
+            </a>
+            <div class="pc-body">
+              <h3 class="pc-name"><?php echo htmlspecialchars($row['name']); ?></h3>
+              <p class="pc-desc"><?php echo htmlspecialchars(substr($row['description'], 0, 90)); ?>…</p>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="pc-price">₹<?php echo number_format($row['price'], 2); ?></span>
+                <a href="/product.php?id=<?php echo $row['id']; ?>&store=<?php echo $slug; ?>"
+                   class="nav-link-x" style="font-size:.85rem;">View details</a>
+              </div>
+              <a href="/cart.php?action=add&id=<?php echo $row['id']; ?>" class="btn btn-brass-outline w-100">Add to cart</a>
+            </div>
+          </article>
+        </div>
+        <?php endwhile; else: ?>
+        <div class="col-12">
+          <div class="surface p-5 text-center">
+            <p class="mb-0" style="color:var(--muted);">No products listed yet. Check back soon!</p>
+          </div>
         </div>
         <?php endif; ?>
       </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="container text-center">
-      <small style="color:var(--muted);">
-        <?php echo $page_title; ?> — powered by <a href="/">MyEShop</a>
-      </small>
     </div>
-  </footer>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-<?php $conn->close(); ?>
+  </section>
+
+<?php include '../footer.php'; $conn->close(); ?>
