@@ -6,6 +6,7 @@ $nav_mode    = isset($nav_mode)    ? $nav_mode    : 'shop';
 $brand_name  = isset($brand_name)  ? $brand_name  : 'My E&#8209;Shop';
 $brand_logo  = isset($brand_logo)  ? $brand_logo  : '';   // URL string or empty
 $brand_color = isset($brand_color) ? $brand_color : '';   // hex or empty
+$store_slug  = isset($store_slug)  ? $store_slug  : '';   // set by storefront pages
 $cart_count  = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
 $is_admin    = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 $logged_in   = isset($_SESSION['user_id']);
@@ -28,7 +29,12 @@ $logged_in   = isset($_SESSION['user_id']);
   <div class="announce">Complimentary shipping on orders over $75 — handpicked, made to last</div>
   <div class="nav-shell">
     <nav class="navbar navbar-expand-lg container py-3">
-      <a class="brand" href="<?php echo ($nav_mode==='seller') ? '/seller/dashboard.php' : '/index.php'; ?>">
+      <?php
+      if ($nav_mode === 'seller')      $brand_href = '/seller/dashboard.php';
+      elseif ($nav_mode === 'storefront') $brand_href = '/shop/' . htmlspecialchars($store_slug);
+      else                              $brand_href = '/index.php';
+      ?>
+      <a class="brand" href="<?php echo $brand_href; ?>">
         <?php if ($brand_logo): ?>
           <img src="<?php echo htmlspecialchars($brand_logo); ?>" alt="<?php echo htmlspecialchars(strip_tags($brand_name)); ?>"
                style="height:36px;width:36px;object-fit:cover;border-radius:50%;margin-right:8px;vertical-align:middle;">
@@ -52,8 +58,19 @@ $logged_in   = isset($_SESSION['user_id']);
           <li class="nav-item"><a class="nav-link-x" href="/admin/view_orders.php">View Orders</a></li>
           <li class="nav-item"><a class="nav-link-x" href="/admin/stores.php">Stores</a></li>
           <li class="nav-item mt-2 mt-lg-0"><a class="nav-link-x" href="/logout.php">Logout</a></li>
+        <?php elseif ($nav_mode === 'storefront'): ?>
+          <li class="nav-item"><a class="nav-link-x" href="/shop/<?php echo htmlspecialchars($store_slug); ?>">Home</a></li>
+          <li class="nav-item mt-2 mt-lg-0"><a class="cart-pill" href="/cart.php?store=<?php echo htmlspecialchars($store_slug); ?>">Cart · <?php echo $cart_count; ?></a></li>
+          <?php if ($logged_in): ?>
+            <li class="nav-item"><a class="nav-link-x" href="/orders.php?store=<?php echo htmlspecialchars($store_slug); ?>">My Orders</a></li>
+            <li class="nav-item"><a class="nav-link-x" href="/logout.php?store=<?php echo htmlspecialchars($store_slug); ?>">Logout</a></li>
+          <?php else: ?>
+            <li class="nav-item"><a class="nav-link-x" href="/login.php?store=<?php echo htmlspecialchars($store_slug); ?>">Login</a></li>
+            <li class="nav-item"><a class="nav-link-x" href="/register.php?store=<?php echo htmlspecialchars($store_slug); ?>">Register</a></li>
+          <?php endif; ?>
         <?php else: ?>
           <li class="nav-item"><a class="nav-link-x" href="/index.php">Home</a></li>
+          <li class="nav-item"><a class="nav-link-x" href="/index.php#stores">Browse Stores</a></li>
           <li class="nav-item mt-2 mt-lg-0"><a class="cart-pill" href="/cart.php">Cart · <?php echo $cart_count; ?></a></li>
           <?php if ($logged_in): ?>
             <?php if ($is_admin): ?><li class="nav-item"><a class="nav-link-x" href="/admin/add_product.php">Admin</a></li><?php endif; ?>

@@ -6,6 +6,11 @@ $message      = '';
 $field_errors = [];
 $old          = [];
 
+// Store context — if registering from a seller storefront, lock to customer-only
+$store_slug = '';
+$raw = $_POST['store'] ?? $_GET['store'] ?? '';
+if (preg_match('/^[a-z0-9_-]+$/', $raw)) $store_slug = $raw;
+
 function password_rules(string $pw): array {
     $fails = [];
     if (strlen($pw) < 8)                    $fails[] = 'length';
@@ -41,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($password !== $confirm)
         $field_errors['confirm'] = 'Passwords do not match.';
 
-    $account_type = ($_POST['account_type'] ?? 'customer') === 'seller' ? 'seller' : 'customer';
+    // When registering from a store page, force customer role (no sellers via store signup)
+    $account_type = ($store_slug || ($_POST['account_type'] ?? 'customer') !== 'seller') ? 'customer' : 'seller';
 
     if (empty($field_errors)) {
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
@@ -63,7 +69,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['is_admin'] = true;
                     header('Location: seller/setup.php'); exit;
                 }
-                $message = "<div class='alert alert-success'>Registration successful! You can now <a href='login.php'>login</a>.</div>";
+                if ($store_slug) {
+                    // Auto-login and return to the store
+                    $_SESSION['user_id']  = $stmt2->insert_id;
+                    $_SESSION['username'] = $username;
+                    $_SESSION['email']    = $email;
+                    $_SESSION['role']     = 'customer';
+                    $_SESSION['is_admin'] = false;
+                    header('Location: /shop/' . $store_slug); exit;
+                }
+                $login_link = 'login.php' . ($store_slug ? '?store='.htmlspecialchars($store_slug) : '');
+                $message = "<div class='alert alert-success'>Registration successful! You can now <a href='{$login_link}'>login</a>.</div>";
                 $old = [];
             } else {
                 $message = "<div class='alert alert-danger'>Registration failed. Please try again.</div>";
@@ -109,8 +125,11 @@ include 'header.php';
         <?php echo $message; ?>
 
         <form action="register.php" method="post" id="registerForm" novalidate>
-
-          <!-- Account type -->
+          <?php if ($store_slug): ?>
+            <input type="hidden" name="store" value="<?php echo htmlspecialchars($store_slug); ?>">
+            <input type="hidden" name="account_type" value="customer">
+          <?php else: ?>
+          <!-- Account type — only shown on main site, not from a store page -->
           <div class="mb-4">
             <label class="form-label">I want to…</label>
             <div class="d-flex gap-3">
@@ -126,6 +145,7 @@ include 'header.php';
               </div>
             </div>
           </div>
+          <?php endif; ?>
 
           <!-- Username -->
           <div class="mb-3">
@@ -183,7 +203,8 @@ include 'header.php';
         </form>
 
         <p class="text-center mt-4 mb-0" style="color:var(--muted);">
-          Already have an account? <a href="login.php">Login here</a>.
+          Already have an account?
+          <a href="login.php<?php echo $store_slug ? '?store='.htmlspecialchars($store_slug) : ''; ?>">Login here</a>.
         </p>
       </div>
     </div>

@@ -16,18 +16,11 @@ if (!$active_store) {
 $store_id = (int)$active_store['id'];
 $slug     = $active_store['slug'];
 
-// Search within this store's products
-$search_term = '';
-if (isset($_GET['search'])) {
-    $search_term = $conn->real_escape_string(trim($_GET['search']));
-}
+// Pre-populate search box if coming from a URL with ?search=
+$search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Fetch products scoped to this store
-$sql = "SELECT id, name, price, image, description FROM products WHERE store_id = $store_id";
-if ($search_term !== '') {
-    $sql .= " AND (name LIKE '%$search_term%' OR description LIKE '%$search_term%')";
-}
-$sql .= " ORDER BY created_at DESC";
+// Always load ALL products — live filtering is done client-side via JS
+$sql    = "SELECT id, name, price, image, description FROM products WHERE store_id = $store_id ORDER BY created_at DESC";
 $result = $conn->query($sql);
 
 // Pass branding to header.php
@@ -37,6 +30,9 @@ $brand_color = htmlspecialchars($active_store['primary_color']);
 $brand_logo  = !empty($active_store['logo'])
                ? '/uploads/stores/' . htmlspecialchars($active_store['logo'])
                : '';
+$nav_mode    = 'storefront';
+$store_slug  = $slug;
+$_SESSION['current_store_slug'] = $slug;   // sticky across product/cart pages
 
 include '../header.php';
 ?>
@@ -81,16 +77,17 @@ include '../header.php';
           <div class="eyebrow">The catalogue</div>
           <h2 class="mb-0">Products</h2>
         </div>
-        <form method="GET" action="/shop/<?php echo $slug; ?>" class="search-wrap" style="max-width:420px;width:100%;">
+        <div class="search-wrap" style="max-width:420px;width:100%;">
           <div class="input-group">
-            <input type="text" name="search" class="form-control" placeholder="Search products…"
-                   value="<?php echo htmlspecialchars($search_term); ?>">
-            <button type="submit" class="btn">Search</button>
+            <input type="text" id="liveSearch" class="form-control"
+                   placeholder="Search products…"
+                   value="<?php echo htmlspecialchars($search_term); ?>"
+                   autocomplete="off">
           </div>
-        </form>
+        </div>
       </div>
 
-      <div class="row g-4">
+      <div class="row g-4" id="productGrid">
         <?php
         if ($result && $result->num_rows > 0):
             while ($row = $result->fetch_assoc()):
@@ -98,7 +95,9 @@ include '../header.php';
                        ? '/uploads/' . htmlspecialchars($row['image'])
                        : '/uploads/default_placeholder.png';
         ?>
-        <div class="col-12 col-sm-6 col-lg-4">
+        <div class="col-12 col-sm-6 col-lg-4 product-item"
+             data-name="<?php echo strtolower(htmlspecialchars($row['name'])); ?>"
+             data-desc="<?php echo strtolower(htmlspecialchars($row['description'])); ?>">
           <article class="product-card">
             <a href="/product.php?id=<?php echo $row['id']; ?>&store=<?php echo $slug; ?>" class="pc-img d-block">
               <img src="<?php echo $img; ?>" alt="<?php echo htmlspecialchars($row['name']); ?>">
@@ -116,14 +115,55 @@ include '../header.php';
           </article>
         </div>
         <?php endwhile; else: ?>
-        <div class="col-12">
+        <div class="col-12" id="emptyState">
           <div class="surface p-5 text-center">
             <p class="mb-0" style="color:var(--muted);">No products listed yet. Check back soon!</p>
           </div>
         </div>
         <?php endif; ?>
+
+        <!-- shown by JS when search finds nothing -->
+        <div class="col-12" id="noResults" style="display:none;">
+          <div class="surface p-5 text-center">
+            <p class="mb-0" style="color:var(--muted);">No products match your search.</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
+
+<script>
+(function () {
+  var input    = document.getElementById('liveSearch');
+  var grid     = document.getElementById('productGrid');
+  var noResult = document.getElementById('noResults');
+  if (!input || !grid) return;
+
+  // Apply filter immediately on load (handles ?search= in URL)
+  filterProducts(input.value);
+
+  input.addEventListener('input', function () {
+    filterProducts(this.value);
+  });
+
+  function filterProducts(term) {
+    term = term.toLowerCase().trim();
+    var items   = grid.querySelectorAll('.product-item');
+    var visible = 0;
+
+    items.forEach(function (item) {
+      var name = item.dataset.name || '';
+      var desc = item.dataset.desc || '';
+      var show = (term === '' || name.indexOf(term) !== -1 || desc.indexOf(term) !== -1);
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    if (noResult) {
+      noResult.style.display = (items.length > 0 && visible === 0) ? '' : 'none';
+    }
+  }
+})();
+</script>
 
 <?php include '../footer.php'; $conn->close(); ?>
