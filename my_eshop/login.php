@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['is_admin'] = in_array($user['role'], ['seller', 'super_admin'], true);
 
                     if ($user['role'] === 'seller') {
-                        header("Location: seller/dashboard.php"); exit;
+                        header("Location: seller/welcome.php"); exit;
                     } elseif ($user['role'] === 'super_admin') {
                         header("Location: admin/manage_products.php"); exit;
                     }
