@@ -5,7 +5,7 @@
         <!-- Brand + tagline -->
         <div class="col-lg-5">
           <div class="f-brand">My E&#8209;Shop <span class="dot"></span></div>
-          <p class="mt-3 mb-0" style="max-width:22rem;color:#C9C3B2;font-size:.9rem;line-height:1.6;">
+          <p class="mt-3 mb-0" style="max-width:22rem;color:var(--on-dark-dim);font-size:.9rem;line-height:1.6;">
             The marketplace for diecast collectors and independent resellers.
           </p>
         </div>
@@ -20,13 +20,30 @@
           </div>
         </div>
 
-        <!-- Account links -->
+        <!-- Account links — reflect who is actually signed in.
+             Read from $_SESSION rather than header.php's $logged_in/$is_admin so
+             this stays correct even on a page that includes the footer alone. -->
+        <?php
+          $f_logged_in = isset($_SESSION['user_id']);
+          $f_role      = $_SESSION['role'] ?? 'customer';
+        ?>
         <div class="col-6 col-lg-4">
           <div class="f-label mb-3">Account</div>
           <div class="d-flex flex-column gap-2">
-            <a href="/login.php">Login</a>
-            <a href="/register.php">Register</a>
-            <a href="/register.php">Open a store</a>
+            <?php if ($f_logged_in): ?>
+              <?php if ($f_role === 'seller'): ?>
+                <a href="/seller/dashboard.php">Seller dashboard</a>
+              <?php elseif ($f_role === 'super_admin'): ?>
+                <a href="/admin/manage_products.php">Admin panel</a>
+              <?php endif; ?>
+              <a href="/profile.php">Your profile</a>
+              <a href="/orders.php">Your orders</a>
+              <a href="/logout.php">Logout</a>
+            <?php else: ?>
+              <a href="/login.php">Login</a>
+              <a href="/register.php">Register</a>
+              <a href="/register.php">Open a store</a>
+            <?php endif; ?>
           </div>
         </div>
       </div>

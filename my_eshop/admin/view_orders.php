@@ -73,7 +73,7 @@ include '../header.php';
                     echo "<td>$" . number_format($order['total_amount'], 2) . "</td>";
                     echo "<td>" . date("M d, Y H:i", strtotime($order['created_at'])) . "</td>";
                     echo "<td><span class='status-badge'>" . htmlspecialchars($order['status']) . "</span></td>";
-                    echo "<td style='max-width:220px;font-size:.88rem;color:#4A453C;'>" . nl2br(htmlspecialchars($order['shipping_address'])) . "</td>";
+                    echo "<td style='max-width:220px;font-size:.88rem;color:var(--text-muted);'>" . nl2br(htmlspecialchars($order['shipping_address'])) . "</td>";
                     echo "<td>
                             <form method='POST' action='view_orders.php' class='d-flex gap-2'>
                                 <input type='hidden' name='order_id' value='" . $order['id'] . "'>

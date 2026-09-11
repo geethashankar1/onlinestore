@@ -189,7 +189,7 @@ include 'header.php';
                   <div style="color:var(--muted);font-size:.85rem;"><?php echo date('F j, Y · g:i A', strtotime($order['created_at'])); ?></div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                  <span style="font-family:'Fraunces',serif;font-size:1.1rem;color:var(--brass-deep);font-weight:600;">$<?php echo number_format($order['total_amount'], 2); ?></span>
+                  <span style="font-size:1.1rem;color:var(--text);font-weight:600;">$<?php echo number_format($order['total_amount'], 2); ?></span>
                   <span class="status-badge"><?php echo htmlspecialchars($order['status']); ?></span>
                 </div>
               </div>

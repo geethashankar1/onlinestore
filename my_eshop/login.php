@@ -29,6 +29,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ($result->num_rows == 1) {
                 $user = $result->fetch_assoc();
                 if (password_verify($password, $user['password'])) {
+                    // New session id on privilege change — stops a session id
+                    // planted before login from becoming an authenticated one.
+                    session_regenerate_id(true);
                     $_SESSION['user_id']  = $user['id'];
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['email']    = $user['email'];

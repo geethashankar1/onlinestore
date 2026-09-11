@@ -128,7 +128,7 @@ include 'header.php';
 /* ── Checkout ──────────────────────────────────────────────── */
 .co-section{background:var(--card);border:1px solid var(--line);border-radius:4px;
   box-shadow:var(--shadow-sm);padding:1.6rem 1.8rem;margin-bottom:1.25rem;}
-.co-title{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:500;
+.co-title{font-size:1.1rem;font-weight:500;
   margin:0 0 1.2rem;padding-bottom:.75rem;border-bottom:1px solid var(--line);}
 .co-field-err{font-size:.82rem;color:var(--danger);margin-top:.3rem;}
 .co-invalid{border-color:var(--danger)!important;}
@@ -142,7 +142,7 @@ include 'header.php';
 .pay-tab{flex:1;padding:.75rem 1rem;font-weight:700;font-size:.88rem;background:var(--ivory-2);
   border:0;border-right:1px solid var(--line);color:var(--muted);cursor:pointer;transition:all .2s;}
 .pay-tab:last-child{border-right:0;}
-.pay-tab.active{background:var(--green);color:#F6F2EA;}
+.pay-tab.active{background:var(--accent);color:var(--on-accent);}
 .pay-tab:hover:not(.active){background:var(--ivory);color:var(--ink);}
 
 /* Card type radio buttons */
@@ -152,29 +152,29 @@ include 'header.php';
 .ct-box{border:1.5px solid var(--line);border-radius:4px;padding:.7rem 1rem;
   text-align:center;font-weight:700;font-size:.88rem;color:var(--muted);
   background:var(--ivory-2);transition:all .2s;}
-.ct-label input:checked+.ct-box{border-color:var(--green);color:var(--green);background:#EEF3EE;}
-.ct-box:hover{border-color:var(--brass);color:var(--ink);}
+.ct-label input:checked+.ct-box{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+.ct-box:hover{border-color:var(--text-muted);color:var(--text);}
 
 /* Card brand badge */
 .card-brand-badge{display:inline-block;font-size:.7rem;font-weight:700;
   letter-spacing:.06em;text-transform:uppercase;padding:.15rem .55rem;border-radius:3px;
   background:var(--ivory);border:1px solid var(--line);color:var(--muted);
   margin-left:.5rem;vertical-align:middle;transition:all .2s;}
-.card-brand-badge.detected{color:var(--green);border-color:#CBDAC7;background:#EEF3EE;}
+.card-brand-badge.detected{color:var(--accent-hover);border-color:var(--accent-soft);background:var(--accent-soft);}
 
 /* Razorpay section */
 .rzp-box{background:var(--ivory-2);border:1px solid var(--line);border-radius:4px;
   padding:1.6rem;text-align:center;}
-.rzp-btn{background:#072654;color:#fff;border:0;border-radius:4px;
+.rzp-btn{background:var(--accent);color:#fff;border:0;border-radius:6px;
   padding:.9rem 2rem;font-size:1rem;font-weight:700;cursor:pointer;
   letter-spacing:.02em;transition:background .2s;min-width:220px;}
-.rzp-btn:hover{background:#0b3a7a;}
+.rzp-btn:hover{background:var(--accent-hover);}
 .rzp-btn:disabled{opacity:.6;cursor:not-allowed;}
 
 /* Success card */
-.order-success-icon{width:68px;height:68px;border-radius:50%;background:#EEF3EE;
+.order-success-icon{width:68px;height:68px;border-radius:50%;background:var(--accent-soft);
   display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;
-  font-size:2rem;color:var(--green);}
+  font-size:2rem;color:var(--text);}
 
 @media(min-width:992px){.summary-sticky{position:sticky;top:90px;}}
 </style>
@@ -449,7 +449,7 @@ include 'header.php';
             <?php endforeach; ?>
             <div class="d-flex justify-content-between align-items-center mt-3 pt-1">
               <span class="cart-total" style="font-size:1.2rem;">Total</span>
-              <span class="cart-total" style="font-size:1.2rem;color:var(--brass-deep);">
+              <span class="cart-total" style="font-size:1.2rem;color:var(--text);">
                 $<?php echo number_format($total_amount, 2); ?>
               </span>
             </div>
@@ -785,7 +785,7 @@ include 'header.php';
             });
           },
           prefill:  { name: USER_NAME, email: USER_EMAIL, contact: v('s_phone') },
-          theme:    { color: '#36473C' },
+          theme:    { color: '#C2542A' },
           modal:    {
             ondismiss: function () {
               rzpPayBtn.disabled = false;

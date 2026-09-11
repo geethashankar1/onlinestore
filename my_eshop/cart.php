@@ -164,7 +164,7 @@ include 'header.php';
             <h3 class="serif mb-3" style="font-size:1.2rem;">Summary</h3>
             <div class="d-flex justify-content-between align-items-center mb-3">
               <span class="cart-total">Total</span>
-              <span class="cart-total" id="cart-total" style="color:var(--brass-deep);">
+              <span class="cart-total" id="cart-total" style="color:var(--text);">
                 &#8377;<?php echo number_format($total_price, 2); ?>
               </span>
             </div>

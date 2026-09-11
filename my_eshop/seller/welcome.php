@@ -21,7 +21,7 @@ include '../header.php';
 .welcome-wrap{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:3rem 1rem;}
 .welcome-card{background:#fff;border:1px solid var(--line);border-radius:8px;
   padding:2.5rem 2rem;max-width:560px;width:100%;text-align:center;}
-.welcome-heading{font-family:'Fraunces',serif;font-size:2rem;font-weight:600;
+.welcome-heading{font-size:2rem;font-weight:600;
   color:var(--ink);margin-bottom:.35rem;}
 .welcome-sub{color:var(--muted);font-size:.95rem;margin-bottom:2.5rem;}
 .choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
@@ -29,9 +29,9 @@ include '../header.php';
 .choice-btn{display:flex;flex-direction:column;align-items:center;gap:.6rem;
   border:1.5px solid var(--line);border-radius:6px;padding:1.6rem 1rem;
   text-decoration:none;color:var(--ink);transition:border-color .2s,box-shadow .2s;}
-.choice-btn:hover{border-color:var(--brass);box-shadow:var(--shadow);color:var(--ink);}
-.choice-btn.primary{background:var(--green-deep);border-color:var(--green-deep);color:var(--ivory);}
-.choice-btn.primary:hover{color:var(--ivory);border-color:var(--green-deep);opacity:.9;}
+.choice-btn:hover{border-color:var(--text-muted);box-shadow:var(--shadow-sm);color:var(--text);}
+.choice-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.choice-btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:#fff;}
 .choice-icon{font-size:1.75rem;line-height:1;}
 .choice-label{font-weight:700;font-size:.95rem;}
 .choice-desc{font-size:.8rem;color:inherit;opacity:.7;}

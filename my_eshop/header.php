@@ -17,16 +17,20 @@ $logged_in   = isset($_SESSION['user_id']);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?php echo htmlspecialchars($page_title); ?></title>
-<?php if ($brand_color): ?><style>:root{--accent:<?php echo htmlspecialchars($brand_color); ?>;}</style><?php endif; ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Mulish:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/theme.css">
+<?php if ($brand_color): ?>
+<?php /* Must come AFTER theme.css or the default --accent wins and the
+         seller's chosen colour silently does nothing. */ ?>
+<style>:root{--accent:<?php echo htmlspecialchars($brand_color); ?>;}</style>
+<?php endif; ?>
 </head>
 <body>
 <div class="app-shell">
-  <div class="announce">Complimentary shipping on orders over $75 — handpicked, made to last</div>
+  <div class="announce">Free delivery on orders over ₹999 · Shop independent sellers</div>
   <div class="nav-shell">
     <nav class="navbar navbar-expand-lg container py-3">
       <?php
@@ -86,3 +90,10 @@ $logged_in   = isset($_SESSION['user_id']);
     </nav>
   </div>
   <main>
+    <?php if (!empty($_SESSION['flash'])): ?>
+      <?php /* One-shot message set before a redirect; cleared on display. */ ?>
+      <div class="container pt-4">
+        <div class="alert alert-success mb-0"><?php echo htmlspecialchars($_SESSION['flash']); ?></div>
+      </div>
+      <?php unset($_SESSION['flash']); ?>
+    <?php endif; ?>

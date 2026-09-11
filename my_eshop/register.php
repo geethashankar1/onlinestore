@@ -62,25 +62,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt2->execute()) {
                 if ($account_type === 'seller') {
                     // Log them in immediately and send to store setup
+                    session_regenerate_id(true);
                     $_SESSION['user_id']  = $stmt2->insert_id;
                     $_SESSION['username'] = $username;
                     $_SESSION['email']    = $email;
                     $_SESSION['role']     = 'seller';
                     $_SESSION['is_admin'] = true;
+                    $_SESSION['flash']    = 'Welcome, ' . $username . '. Let\'s set up your store.';
                     header('Location: seller/setup.php'); exit;
                 }
                 if ($store_slug) {
                     // Auto-login and return to the store
+                    session_regenerate_id(true);
                     $_SESSION['user_id']  = $stmt2->insert_id;
                     $_SESSION['username'] = $username;
                     $_SESSION['email']    = $email;
                     $_SESSION['role']     = 'customer';
                     $_SESSION['is_admin'] = false;
+                    $_SESSION['flash']    = 'Welcome, ' . $username . '. Your account is ready.';
                     header('Location: /shop/' . $store_slug); exit;
                 }
-                $login_link = 'login.php' . ($store_slug ? '?store='.htmlspecialchars($store_slug) : '');
-                $message = "<div class='alert alert-success'>Registration successful! You can now <a href='{$login_link}'>login</a>.</div>";
-                $old = [];
+                // Log the new customer straight in. Making someone re-enter the
+                // credentials they chose two seconds ago is friction for no gain,
+                // and the seller / store-referral paths above already do this.
+                session_regenerate_id(true);
+                $_SESSION['user_id']  = $stmt2->insert_id;
+                $_SESSION['username'] = $username;
+                $_SESSION['email']    = $email;
+                $_SESSION['role']     = 'customer';
+                $_SESSION['is_admin'] = false;
+                $_SESSION['flash']    = 'Welcome, ' . $username . '. Your account is ready.';
+                header('Location: index.php'); exit;
             } else {
                 $message = "<div class='alert alert-danger'>Registration failed. Please try again.</div>";
             }
@@ -103,7 +115,7 @@ include 'header.php';
 .pw-rules{list-style:none;padding:0;margin:.5rem 0 0;display:flex;flex-direction:column;gap:.25rem;}
 .pw-rules li{font-size:.82rem;display:flex;align-items:center;gap:.45rem;color:var(--muted);transition:color .2s;}
 .pw-rules li::before{content:"○";font-size:.7rem;flex-shrink:0;}
-.pw-rules li.pw-ok{color:#2C6B34;}
+.pw-rules li.pw-ok{color:var(--success);}
 .pw-rules li.pw-ok::before{content:"✓";}
 .pw-rules li.pw-fail{color:var(--danger);}
 .pw-rules li.pw-fail::before{content:"✕";}
