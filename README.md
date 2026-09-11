@@ -25,13 +25,20 @@ Stop with `Ctrl+C`, then `docker compose down`.
 To wipe the database and re-seed from scratch: `docker compose down -v` (deletes the `db_data` volume).
 
 ## Login
+
+A **local development** seed account is created on first start:
+
 | Account | Email | Password |
 |---|---|---|
-| Admin | `admin@example.com` (username `admin`) | `admin123` |
+| Admin | `admin@example.com` (username `admin`) | see `db/init.sql` |
 
-Change the password after first login. There is no "admin" column — `login.php`
-grants admin rights when the username is `admin` **or** the user id is `1`.
-To promote any other user, set their `username` to `admin` or make them user id 1.
+> These credentials are for a throwaway local database only. **Change the password
+> immediately on any deployment** — the seed values are public in this repo, so a
+> deployed instance running them is effectively unauthenticated.
+
+Roles live in `users.role` (`super_admin` / `seller` / `customer`), added by
+`db/migrations/001_add_role_to_users.sql`. To promote an account, set its `role`
+to `super_admin`.
 
 ## Database
 Tables (cart is **session-based**, so there is no cart table):
