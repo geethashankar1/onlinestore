@@ -3,6 +3,10 @@
 // JSON headers, CORS, a stateless mysqli connection (no session), and helpers.
 
 require_once __DIR__ . '/jwt.php';
+// Image URL helpers — the API returns absolute image_url values, and those may
+// be Cloudinary URLs. This file does not load config/db.php (it keeps its own
+// session-less connection), so media.php has to be required directly.
+require_once dirname(__DIR__, 2) . '/config/media.php';
 
 // ---- headers / CORS (dev: open. Lock the origin down before production) ----
 header('Access-Control-Allow-Origin: *');
@@ -24,6 +28,10 @@ $DB_HOST = getenv('DB_HOST') ?: 'db';
 $DB_USER = getenv('DB_USER') ?: 'eshop';
 $DB_PASS = getenv('DB_PASS') ?: 'eshop_pass';
 $DB_NAME = getenv('DB_NAME') ?: 'ecommerce_db';
+// Managed MySQL (Aiven etc.) uses a non-default port and requires TLS.
+$DB_PORT   = (int)(getenv('DB_PORT') ?: 3306);
+$DB_SSL_CA = (string)(getenv('DB_SSL_CA') ?: '');
+$DB_SSL    = $DB_SSL_CA !== '' || filter_var((string)(getenv('DB_SSL') ?: 'false'), FILTER_VALIDATE_BOOLEAN);
 
 // ---- response helpers ----
 function respond(int $status, $data): void {
@@ -41,14 +49,16 @@ function base_url(): string {
 }
 function product_shape(array $r): array {
     $img = (string)($r['image'] ?? '');
-    $file = $img !== '' ? rawurlencode($img) : 'default_placeholder.png';
+    $url = media_url($img);
     return [
         'id'          => (int)$r['id'],
         'name'        => $r['name'],
         'description' => $r['description'],
         'price'       => (float)$r['price'],
         'image'       => $img,
-        'image_url'   => base_url() . '/uploads/' . $file,
+        // Always absolute so the mobile app can load it directly. Cloudinary
+        // values are already absolute and pass through untouched.
+        'image_url'   => preg_match('#^https?://#i', $url) ? $url : base_url() . $url,
         'created_at'  => $r['created_at'] ?? null,
     ];
 }
@@ -76,7 +86,21 @@ function require_auth(): array {
 
 // ---- DB connection (stateless: no session_start here) ----
 try {
-    $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME);
+    $conn  = mysqli_init();
+    $flags = 0;
+    if ($DB_SSL) {
+        if ($DB_SSL_CA !== '' && is_file($DB_SSL_CA)) {
+            $conn->ssl_set(null, null, $DB_SSL_CA, null, null);
+            $flags = MYSQLI_CLIENT_SSL;
+        } else {
+            // Encrypted but unverified; set DB_SSL_CA to verify the provider.
+            $conn->ssl_set(null, null, null, null, null);
+            $flags = MYSQLI_CLIENT_SSL | MYSQLI_CLIENT_SSL_DONT_VERIFY_SERVER_CERT;
+        }
+    }
+    if (!@$conn->real_connect($DB_HOST, $DB_USER, $DB_PASS, $DB_NAME, $DB_PORT, null, $flags)) {
+        throw new RuntimeException(mysqli_connect_error() ?: 'connect failed');
+    }
     $conn->set_charset('utf8mb4');
 } catch (Throwable $e) {
     respond(500, ['error' => 'Database connection failed'] + (API_DEBUG ? ['detail' => $e->getMessage()] : []));

@@ -21,9 +21,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
         $stmt_img->execute();
         $result_img = $stmt_img->get_result();
         if ($row_img = $result_img->fetch_assoc()) {
-            if (!empty($row_img['image']) && file_exists("../uploads/" . $row_img['image'])) {
-                unlink("../uploads/" . $row_img['image']); // Delete the image file
-            }
+            media_delete($row_img['image'] ?? ''); // Local file; Cloudinary URLs are left alone
         }
         $stmt_img->close();
     }
@@ -74,8 +72,8 @@ include '../header.php';
                 while ($product = $products_result->fetch_assoc()) {
                     echo "<tr>";
                     echo "<td>";
-                    if (!empty($product['image']) && file_exists('../uploads/' . $product['image'])) {
-                        echo "<img src='../uploads/" . htmlspecialchars($product['image']) . "' alt='" . htmlspecialchars($product['name']) . "' style='width:54px;height:54px;object-fit:cover;'>";
+                    if (!empty($product['image'])) {
+                        echo "<img src='" . htmlspecialchars(media_url($product['image'])) . "' alt='" . htmlspecialchars($product['name']) . "' style='width:54px;height:54px;object-fit:cover;'>";
                     } else {
                         echo "<span style='color:var(--muted);font-size:.85rem;'>No image</span>";
                     }

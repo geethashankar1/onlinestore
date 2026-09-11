@@ -109,9 +109,7 @@ include 'header.php';
         <div class="col-lg-8">
 
           <?php foreach ($cart_items as $item):
-            $img = (!empty($item['image']) && file_exists('uploads/' . $item['image']))
-                 ? 'uploads/' . htmlspecialchars($item['image'])
-                 : 'uploads/default_placeholder.png';
+            $img = htmlspecialchars(media_url($item['image'] ?? ''));
             $subtotal = $item['price'] * $item['quantity'];
             $total_price += $subtotal;
           ?>

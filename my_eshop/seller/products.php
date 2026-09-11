@@ -22,9 +22,7 @@ if (isset($_GET['action'], $_GET['id']) && $_GET['action'] === 'delete') {
     $chk->close();
 
     if ($row) {
-        if (!empty($row['image']) && file_exists('../uploads/' . $row['image'])) {
-            unlink('../uploads/' . $row['image']);
-        }
+        media_delete($row['image'] ?? '');
         $del = $conn->prepare("DELETE FROM products WHERE id = ? AND store_id = ?");
         $del->bind_param('ii', $pid, $store_id);
         $del->execute();
@@ -63,8 +61,8 @@ include '../header.php';
           <?php if ($products->num_rows > 0): while ($p = $products->fetch_assoc()): ?>
           <tr>
             <td>
-              <?php if (!empty($p['image']) && file_exists('../uploads/' . $p['image'])): ?>
-                <img src="../uploads/<?php echo htmlspecialchars($p['image']); ?>"
+              <?php if (!empty($p['image'])): ?>
+                <img src="<?php echo htmlspecialchars(media_url($p['image'])); ?>"
                      style="width:54px;height:54px;object-fit:cover;">
               <?php else: ?><span style="color:var(--muted);font-size:.85rem;">No image</span><?php endif; ?>
             </td>

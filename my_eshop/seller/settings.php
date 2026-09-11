@@ -21,16 +21,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($name === '') {
         $message = "<div class='alert alert-danger'>Store name is required.</div>";
     } else {
-        // Handle new logo upload
-        if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-            $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
-            if (in_array($ext, ['jpg','jpeg','png','gif','webp']) && $_FILES['logo']['size'] <= 2*1024*1024) {
-                $dir = '../uploads/stores/';
-                if (!is_dir($dir)) mkdir($dir, 0777, true);
-                // Delete old logo
-                if ($logo && file_exists($dir . $logo)) unlink($dir . $logo);
-                $logo = 'store_' . uniqid('', true) . '.' . $ext;
-                move_uploaded_file($_FILES['logo']['tmp_name'], $dir . $logo);
+        // Handle new logo upload — stored on Cloudinary in production, in
+        // uploads/stores/ locally. Only replace the old logo once the new one
+        // is safely stored, so a failed upload keeps the existing logo.
+        if (isset($_FILES['logo'])) {
+            $upload_error = null;
+            $new_logo     = media_store($_FILES['logo'], 'stores', $upload_error);
+            if ($upload_error !== null) {
+                $message = "<div class='alert alert-danger'>" . htmlspecialchars($upload_error) . "</div>";
+            } elseif ($new_logo !== '') {
+                media_delete($logo, 'stores');
+                $logo = $new_logo;
             }
         }
 
@@ -76,7 +77,7 @@ include '../header.php';
         <div class="mb-3">
           <label class="form-label">Store Logo
             <?php if ($active_store['logo']): ?>
-              <img src="../uploads/stores/<?php echo htmlspecialchars($active_store['logo']); ?>"
+              <img src="<?php echo htmlspecialchars(media_url($active_store['logo'], 'stores')); ?>"
                    style="height:36px;margin-left:8px;border-radius:4px;">
             <?php endif; ?>
           </label>

@@ -20,35 +20,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($name) || empty($description) || $price <= 0) {
         $message = "<div class='alert alert-danger'>Name, description, and a valid price are required.</div>";
     } else {
-        // Handle image upload
-        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] == 0) {
-            $target_dir = "../uploads/"; // Relative to this admin script's location
-            if (!is_dir($target_dir)) {
-                mkdir($target_dir, 0777, true);
+        // Handle image upload — media_store() validates type/size and writes to
+        // Cloudinary in production or uploads/ locally, returning the DB value.
+        if (isset($_FILES['product_image'])) {
+            $upload_error = null;
+            $image_name   = media_store($_FILES['product_image'], 'products', $upload_error);
+            if ($upload_error !== null) {
+                $message = "<div class='alert alert-danger'>" . htmlspecialchars($upload_error) . "</div>";
             }
-            $image_extension = strtolower(pathinfo($_FILES['product_image']['name'], PATHINFO_EXTENSION));
-            $allowed_extensions = array("jpg", "jpeg", "png", "gif");
-
-            if (in_array($image_extension, $allowed_extensions)) {
-                if ($_FILES['product_image']['size'] <= 5000000) { // 5MB limit
-                    // Generate a unique name for the image to prevent overwriting
-                    $image_name = uniqid('product_', true) . '.' . $image_extension;
-                    $target_file = $target_dir . $image_name;
-
-                    if (!move_uploaded_file($_FILES['product_image']['tmp_name'], $target_file)) {
-                        $message = "<div class='alert alert-danger'>Sorry, there was an error uploading your file.</div>";
-                        $image_name = ''; // Reset image name if upload failed
-                    }
-                } else {
-                    $message = "<div class='alert alert-danger'>Sorry, your file is too large (max 5MB).</div>";
-                    $image_name = '';
-                }
-            } else {
-                $message = "<div class='alert alert-danger'>Sorry, only JPG, JPEG, PNG & GIF files are allowed.</div>";
-                $image_name = '';
-            }
-        } elseif (isset($_FILES['product_image']) && $_FILES['product_image']['error'] != UPLOAD_ERR_NO_FILE) {
-            $message = "<div class='alert alert-danger'>Error uploading image: code " . $_FILES['product_image']['error'] . "</div>";
         }
 
 

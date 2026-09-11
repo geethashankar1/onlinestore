@@ -8,6 +8,11 @@ pipeline {
         IMAGE_LATEST  = "${REGISTRY}/${IMAGE_NAME}:latest"
         COMPOSE_PROD  = '/opt/eshop/docker-compose.prod.yml'
         COMPOSE_STAGE = '/opt/eshop/docker-compose.staging.yml'
+
+        // Deploy targets — update SERVER_IP when the host changes (OCI instance IP).
+        SERVER_IP     = 'REPLACE_WITH_OCI_PUBLIC_IP'
+        STAGING_URL   = "http://${SERVER_IP}:8080"
+        PROD_URL      = 'https://myeshopstore.online'
     }
 
     stages {
@@ -62,7 +67,7 @@ pipeline {
                     docker compose -f "$COMPOSE_STAGE" up -d --remove-orphans
                     docker exec eshop_nginx_staging nginx -s reload
                     docker image prune -f
-                    echo "Staging deployed: http://64.227.187.60:8080"
+                    echo "Staging deployed: $STAGING_URL"
                 '''
             }
         }
@@ -79,7 +84,7 @@ pipeline {
                     docker compose -f "$COMPOSE_PROD" up -d --remove-orphans
                     docker exec eshop_nginx nginx -s reload
                     docker image prune -f
-                    echo "Production deployed: https://myeshopstore.online"
+                    echo "Production deployed: $PROD_URL"
                 '''
             }
         }

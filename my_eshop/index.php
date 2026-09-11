@@ -177,7 +177,7 @@ $stores = $conn->query(
         <a href="/shop/<?php echo htmlspecialchars($s['slug']); ?>" class="sc">
           <div class="d-flex align-items-center gap-3 mb-1">
             <?php if (!empty($s['logo'])): ?>
-              <img src="/uploads/stores/<?php echo htmlspecialchars($s['logo']); ?>"
+              <img src="<?php echo htmlspecialchars(media_url($s['logo'], 'stores')); ?>"
                    class="sc-avatar" style="object-fit:cover;"
                    alt="<?php echo htmlspecialchars($s['name']); ?>">
             <?php else: ?>

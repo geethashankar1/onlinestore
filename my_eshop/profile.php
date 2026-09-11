@@ -144,9 +144,7 @@ include 'header.php';
         <div class="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3 mb-5">
           <?php foreach ($wishlist as $wi): ?>
             <?php
-              $img = (!empty($wi['image']) && file_exists('uploads/' . $wi['image']))
-                   ? 'uploads/' . htmlspecialchars($wi['image'])
-                   : 'uploads/default_placeholder.png';
+              $img = htmlspecialchars(media_url($wi['image'] ?? ''));
             ?>
             <div class="col">
               <div class="product-card">

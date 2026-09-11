@@ -94,9 +94,7 @@ if ($in_store) {
 }
 include 'header.php';
 
-$img = (!empty($product['image']) && file_exists('uploads/' . $product['image']))
-     ? 'uploads/' . htmlspecialchars($product['image'])
-     : 'uploads/default_placeholder.png';
+$img = htmlspecialchars(media_url($product['image'] ?? ''));
 
 $back_url = $in_store ? '/shop/' . $store_slug : 'index.php';
 $cart_url  = 'cart.php?action=add&id=' . $product['id'] . ($in_store ? '&store=' . $store_slug : '');

@@ -37,19 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dup->close();
     }
 
-    // Handle logo upload
+    // Handle logo upload — Cloudinary in production, uploads/stores/ locally.
     $logo = '';
-    if (empty($errors) && isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-        $ext = strtolower(pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION));
-        if (!in_array($ext, ['jpg','jpeg','png','gif','webp'])) {
-            $errors[] = 'Logo must be JPG, PNG, GIF or WEBP.';
-        } elseif ($_FILES['logo']['size'] > 2 * 1024 * 1024) {
-            $errors[] = 'Logo must be under 2MB.';
-        } else {
-            $dir = '../uploads/stores/';
-            if (!is_dir($dir)) mkdir($dir, 0777, true);
-            $logo = 'store_' . uniqid('', true) . '.' . $ext;
-            move_uploaded_file($_FILES['logo']['tmp_name'], $dir . $logo);
+    if (empty($errors) && isset($_FILES['logo'])) {
+        $upload_error = null;
+        $logo = media_store($_FILES['logo'], 'stores', $upload_error);
+        if ($upload_error !== null) {
+            $errors[] = $upload_error;
         }
     }
 

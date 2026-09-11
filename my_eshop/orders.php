@@ -66,7 +66,7 @@ if ($in_store) {
     if ($store_row) {
         $brand_name  = htmlspecialchars($store_row['name']);
         $brand_color = htmlspecialchars($store_row['primary_color']);
-        $brand_logo  = !empty($store_row['logo']) ? '/uploads/stores/' . htmlspecialchars($store_row['logo']) : '';
+        $brand_logo  = !empty($store_row['logo']) ? htmlspecialchars(media_url($store_row['logo'], 'stores')) : '';
     }
 }
 include 'header.php';

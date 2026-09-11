@@ -28,7 +28,7 @@ $page_title  = htmlspecialchars($active_store['name']);
 $brand_name  = htmlspecialchars($active_store['name']);
 $brand_color = htmlspecialchars($active_store['primary_color']);
 $brand_logo  = !empty($active_store['logo'])
-               ? '/uploads/stores/' . htmlspecialchars($active_store['logo'])
+               ? htmlspecialchars(media_url($active_store['logo'], 'stores'))
                : '';
 $nav_mode    = 'storefront';
 $store_slug  = $slug;
@@ -91,9 +91,7 @@ include '../header.php';
         <?php
         if ($result && $result->num_rows > 0):
             while ($row = $result->fetch_assoc()):
-                $img = (!empty($row['image']) && file_exists('../uploads/' . $row['image']))
-                       ? '/uploads/' . htmlspecialchars($row['image'])
-                       : '/uploads/default_placeholder.png';
+                $img = htmlspecialchars(media_url($row['image'] ?? ''));
         ?>
         <div class="col-12 col-sm-6 col-lg-4 product-item"
              data-name="<?php echo strtolower(htmlspecialchars($row['name'])); ?>"
