@@ -178,6 +178,10 @@ $latest = $conn->query(
           <a href="#stores" class="btn"><span>Browse stores</span></a>
           <a href="register.php" class="btn btn-ghost"><span>Start selling free &rarr;</span></a>
         </div>
+        <?php /* Counters only once there is something to count — "0 models,
+                 0 garages" advertises an empty marketplace. Until then the
+                 free-to-list promise stands on its own. */ ?>
+        <?php if ($stat_models > 0 || $stat_stores > 0): ?>
         <div class="stat-row">
           <div>
             <div class="stat-n"><?php echo number_format($stat_models); ?></div>
@@ -192,6 +196,14 @@ $latest = $conn->query(
             <div class="stat-l">Listing fees</div>
           </div>
         </div>
+        <?php else: ?>
+        <div class="stat-row" style="grid-template-columns:1fr;">
+          <div>
+            <div class="stat-n" style="color:var(--lime);">0%</div>
+            <div class="stat-l">Listing fees &middot; free to open a garage</div>
+          </div>
+        </div>
+        <?php endif; ?>
       </div>
     </div>
   </div>
