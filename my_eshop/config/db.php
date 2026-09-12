@@ -35,14 +35,33 @@ if ($useSsl) {
     }
 }
 
-if (!@$conn->real_connect($servername, $username, $password, $dbname, $dbport, null, $flags)) {
+// mysqli throws mysqli_sql_exception on failure since PHP 8.1 — it does not
+// return false — so this must be caught, not tested. Without the try/catch an
+// unreachable database prints a stack trace (host, user, paths) to visitors.
+try {
+    $connected = $conn->real_connect($servername, $username, $password, $dbname, $dbport, null, $flags);
+} catch (mysqli_sql_exception $e) {
+    $connected = false;
+    $connect_error = $e->getMessage();
+}
+
+if (!$connected) {
+    $detail = $connect_error ?? (mysqli_connect_error() ?: 'unknown error');
     // Always log the detail; only show it when debugging, so a misconfigured
     // production box does not print credentials-adjacent errors to visitors.
-    error_log('DB connection failed: ' . mysqli_connect_error());
+    error_log('DB connection failed: ' . $detail);
+
     if (filter_var((string)(getenv('APP_DEBUG') ?: 'false'), FILTER_VALIDATE_BOOLEAN)) {
-        die('Connection failed: ' . mysqli_connect_error());
+        die('Connection failed: ' . htmlspecialchars($detail));
     }
-    die('Database connection failed.');
+
+    http_response_code(503);
+    header('Retry-After: 300');
+    die('<!doctype html><meta charset="utf-8"><title>Temporarily unavailable</title>'
+      . '<div style="font:15px/1.6 system-ui,sans-serif;max-width:32rem;margin:12vh auto;padding:0 1.5rem;color:#14161A">'
+      . '<h1 style="font-size:1.5rem;margin:0 0 .5rem">Temporarily unavailable</h1>'
+      . '<p style="color:#6B6862;margin:0">We can&rsquo;t reach the database right now. '
+      . 'Please try again in a few minutes.</p></div>');
 }
 
 // Set character set (good practice)

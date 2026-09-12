@@ -3,6 +3,12 @@ FROM php:8.3-apache
 # PHP MySQL driver used by config/db.php (mysqli)
 RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
 
+# The official image ships no active php.ini, so PHP falls back to defaults with
+# display_errors ON — any uncaught error prints a stack trace (hostnames, users,
+# file paths) to visitors. The production preset logs instead of displaying;
+# errors remain readable with `docker logs` / the Render log stream.
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
 # Allow .htaccess overrides so my_eshop/uploads/.htaccess (deny PHP execution) takes effect
 RUN sed -ri 's!AllowOverride None!AllowOverride All!g' /etc/apache2/apache2.conf \
     && a2enmod rewrite
