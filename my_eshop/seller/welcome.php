@@ -19,7 +19,7 @@ include '../header.php';
 
 <style>
 .welcome-wrap{min-height:70vh;display:flex;align-items:center;justify-content:center;padding:3rem 1rem;}
-.welcome-card{background:#fff;border:1px solid var(--line);border-radius:8px;
+.welcome-card{background:var(--surface);border:1px solid var(--line);border-radius:0;
   padding:2.5rem 2rem;max-width:560px;width:100%;text-align:center;}
 .welcome-heading{font-size:2rem;font-weight:600;
   color:var(--ink);margin-bottom:.35rem;}

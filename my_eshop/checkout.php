@@ -132,7 +132,7 @@ include 'header.php';
   margin:0 0 1.2rem;padding-bottom:.75rem;border-bottom:1px solid var(--line);}
 .co-field-err{font-size:.82rem;color:var(--danger);margin-top:.3rem;}
 .co-invalid{border-color:var(--danger)!important;}
-.co-invalid:focus{box-shadow:0 0 0 .15rem rgba(155,59,54,.18)!important;}
+.co-invalid:focus{outline:2px solid var(--danger);outline-offset:2px;box-shadow:none!important;}
 .same-toggle{display:flex;align-items:center;gap:.5rem;cursor:pointer;
   font-size:.88rem;font-weight:600;color:var(--ink);user-select:none;}
 .same-toggle input{width:1rem;height:1rem;accent-color:var(--green);cursor:pointer;flex-shrink:0;}
@@ -785,7 +785,7 @@ include 'header.php';
             });
           },
           prefill:  { name: USER_NAME, email: USER_EMAIL, contact: v('s_phone') },
-          theme:    { color: '#C2542A' },
+          theme:    { color: '#FF3D00' },
           modal:    {
             ondismiss: function () {
               rzpPayBtn.disabled = false;

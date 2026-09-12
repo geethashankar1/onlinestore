@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name        = trim($_POST['name']        ?? '');
     $slug        = strtolower(trim(preg_replace('/[^a-z0-9_-]/i', '', $_POST['slug'] ?? '')));
     $description = trim($_POST['description'] ?? '');
-    $color       = preg_match('/^#[0-9a-f]{6}$/i', $_POST['primary_color'] ?? '') ? $_POST['primary_color'] : '#C2542A';
+    $color       = preg_match('/^#[0-9a-f]{6}$/i', $_POST['primary_color'] ?? '') ? $_POST['primary_color'] : '#FF3D00';
 
     if ($name  === '') $errors[] = 'Store name is required.';
     if ($slug  === '') $errors[] = 'Store URL slug is required.';
@@ -103,7 +103,7 @@ include '../header.php';
         <div class="mb-4">
           <label class="form-label">Brand Colour</label>
           <input name="primary_color" type="color" class="form-control form-control-color"
-                 value="<?php echo htmlspecialchars($_POST['primary_color'] ?? '#C2542A'); ?>">
+                 value="<?php echo htmlspecialchars($_POST['primary_color'] ?? '#FF3D00'); ?>">
         </div>
         <button type="submit" class="btn w-100">Launch My Store</button>
       </form>

@@ -58,9 +58,9 @@ if (!$connected) {
     http_response_code(503);
     header('Retry-After: 300');
     die('<!doctype html><meta charset="utf-8"><title>Temporarily unavailable</title>'
-      . '<div style="font:15px/1.6 system-ui,sans-serif;max-width:32rem;margin:12vh auto;padding:0 1.5rem;color:#14161A">'
+      . '<div style="font:15px/1.6 system-ui,sans-serif;max-width:32rem;margin:12vh auto;padding:0 1.5rem;color:#F4F2ED;background:#0A0B0D">'
       . '<h1 style="font-size:1.5rem;margin:0 0 .5rem">Temporarily unavailable</h1>'
-      . '<p style="color:#6B6862;margin:0">We can&rsquo;t reach the database right now. '
+      . '<p style="color:rgba(244,242,237,.64);margin:0">We can&rsquo;t reach the database right now. '
       . 'Please try again in a few minutes.</p></div>');
 }
 

@@ -3,15 +3,15 @@
     <div class="container py-5">
       <div class="row g-5">
         <!-- Brand + tagline -->
-        <div class="col-lg-5">
-          <div class="f-brand">My E&#8209;Shop <span class="dot"></span></div>
-          <p class="mt-3 mb-0" style="max-width:22rem;color:var(--on-dark-dim);font-size:.9rem;line-height:1.6;">
-            The marketplace for diecast collectors and independent resellers.
+        <div class="col-lg-4">
+          <div class="f-brand"><span class="dot"><span>M</span></span> My E&#8209;Shop</div>
+          <p class="mt-3 mb-0" style="max-width:32ch;color:var(--text-faint);font-size:14px;line-height:1.6;">
+            The marketplace for diecast collectors, enthusiasts and independent resellers.
           </p>
         </div>
 
         <!-- Shop links -->
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
           <div class="f-label mb-3">Shop</div>
           <div class="d-flex flex-column gap-2">
             <a href="/index.php#stores">Browse stores</a>
@@ -27,7 +27,7 @@
           $f_logged_in = isset($_SESSION['user_id']);
           $f_role      = $_SESSION['role'] ?? 'customer';
         ?>
-        <div class="col-6 col-lg-4">
+        <div class="col-6 col-lg-3">
           <div class="f-label mb-3">Account</div>
           <div class="d-flex flex-column gap-2">
             <?php if ($f_logged_in): ?>
@@ -46,11 +46,21 @@
             <?php endif; ?>
           </div>
         </div>
+
+        <!-- Scales -->
+        <div class="col-6 col-lg-3">
+          <div class="f-label mb-3">Scales</div>
+          <div class="d-flex flex-column gap-2">
+            <a href="/index.php#stores">1:18 &amp; 1:24</a>
+            <a href="/index.php#stores">1:43 &amp; 1:64</a>
+            <a href="/index.php#stores">Vintage &amp; tin</a>
+          </div>
+        </div>
       </div>
 
       <div class="f-bottom mt-5 pt-4 d-flex flex-column flex-md-row justify-content-between gap-2">
         <span>&copy; <?php echo date('Y'); ?> My E-Shop. All rights reserved.</span>
-        <span>Made with care.</span>
+        <span>Built for collectors</span>
       </div>
     </div>
   </footer>

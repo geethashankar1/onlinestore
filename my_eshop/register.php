@@ -123,7 +123,7 @@ include 'header.php';
 .field-error{font-size:.82rem;color:var(--danger);margin-top:.3rem;}
 /* invalid input border */
 .input-invalid{border-color:var(--danger)!important;}
-.input-invalid:focus{box-shadow:0 0 0 .15rem rgba(155,59,54,.18)!important;}
+.input-invalid:focus{outline:2px solid var(--danger);outline-offset:2px;box-shadow:none!important;}
 </style>
 
   <section class="page">
