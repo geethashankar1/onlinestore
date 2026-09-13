@@ -101,6 +101,6 @@ onlinestore/
 - **`index.php` search uses string interpolation** with `real_escape_string`
   rather than a prepared statement. It is escaped, but converting it to a bound
   parameter is the correct hardening step.
-- **No `edit_product.php` / `order_details.php`** — both are referenced only in
-  commented-out links in the admin pages; they were never part of the upload.
+- **No `order_details.php`** — referenced only in a commented-out link in the
+  admin pages; it was never part of the upload. (`edit_product.php` now exists.)
 - Payment is a placeholder (checkout records the order only).

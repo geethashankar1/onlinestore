@@ -106,8 +106,12 @@ include '../header.php';
                   <td class="d-none d-md-table-cell"><?php echo htmlspecialchars($product['scale']) ?: '—'; ?></td>
                   <td>&#8377;<?php echo number_format((float)$product['price'], 2); ?></td>
                   <td class="text-end">
-                    <a href="manage_products.php?action=delete&id=<?php echo (int)$product['id']; ?>"
-                       class="btn btn-sm btn-soft-danger delete-product-btn">Delete</a>
+                    <div class="d-inline-flex gap-2">
+                      <a href="edit_product.php?id=<?php echo (int)$product['id']; ?>"
+                         class="btn btn-sm btn-ghost">Edit</a>
+                      <a href="manage_products.php?action=delete&id=<?php echo (int)$product['id']; ?>"
+                         class="btn btn-sm btn-soft-danger delete-product-btn">Delete</a>
+                    </div>
                   </td>
                 </tr>
               <?php endwhile; ?>
