@@ -43,7 +43,9 @@ if (isset($_GET['action']) && $_GET['action'] == 'delete' && isset($_GET['id']))
 
 
 // Fetch products
-$products_result = $conn->query("SELECT id, name, price, image FROM products ORDER BY created_at DESC");
+$products_result = $conn->query(
+    "SELECT id, name, brand, manufacturer, scale, price, image FROM products ORDER BY created_at DESC"
+);
 $page_title = "Manage Products";
 $nav_mode = 'admin';
 include '../header.php';
@@ -56,39 +58,62 @@ include '../header.php';
         <div class="alert alert-success"><?php echo $_SESSION['product_update_message']; unset($_SESSION['product_update_message']); ?></div>
       <?php endif; ?>
 
+      <?php /* Brand/Manufacturer/Scale are hidden below md and folded under the
+               product name instead, so the table never needs to scroll sideways
+               on a phone. */ ?>
+      <style>
+        .attr-meta{display:none;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+          text-transform:uppercase;color:var(--text-faint);margin-top:4px;}
+        @media (max-width:767.98px){ .attr-meta{display:block;} }
+      </style>
+
       <div class="table-shell">
         <table class="table theme-table">
           <thead>
             <tr>
               <th>Image</th>
               <th>Name</th>
+              <th class="d-none d-md-table-cell">Brand</th>
+              <th class="d-none d-md-table-cell">Manufacturer</th>
+              <th class="d-none d-md-table-cell">Scale</th>
               <th>Price</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <?php
-            if ($products_result && $products_result->num_rows > 0) {
-                while ($product = $products_result->fetch_assoc()) {
-                    echo "<tr>";
-                    echo "<td>";
-                    if (!empty($product['image'])) {
-                        echo "<img src='" . htmlspecialchars(media_url($product['image'])) . "' alt='" . htmlspecialchars($product['name']) . "' style='width:54px;height:54px;object-fit:cover;'>";
-                    } else {
-                        echo "<span style='color:var(--muted);font-size:.85rem;'>No image</span>";
-                    }
-                    echo "</td>";
-                    echo "<td>" . htmlspecialchars($product['name']) . "</td>";
-                    echo "<td>$" . htmlspecialchars($product['price']) . "</td>";
-                    echo "<td class='text-end'>";
-                    echo "<a href='manage_products.php?action=delete&id=" . $product['id'] . "' class='btn btn-sm btn-soft-danger delete-product-btn'>Delete</a>";
-                    echo "</td>";
-                    echo "</tr>";
-                }
-            } else {
-                echo "<tr><td colspan='4' class='text-center' style='color:var(--muted);'>No products found.</td></tr>";
-            }
-            ?>
+            <?php if ($products_result && $products_result->num_rows > 0): ?>
+              <?php while ($product = $products_result->fetch_assoc()):
+                $meta = array_filter([$product['brand'], $product['manufacturer'], $product['scale']]);
+              ?>
+                <tr>
+                  <td>
+                    <?php if (!empty($product['image'])): ?>
+                      <img src="<?php echo htmlspecialchars(media_url($product['image'])); ?>"
+                           alt="<?php echo htmlspecialchars($product['name']); ?>"
+                           style="width:54px;height:54px;object-fit:cover;">
+                    <?php else: ?>
+                      <span style="color:var(--text-faint);font-size:.85rem;">No image</span>
+                    <?php endif; ?>
+                  </td>
+                  <td>
+                    <?php echo htmlspecialchars($product['name']); ?>
+                    <?php if ($meta): ?>
+                      <div class="attr-meta"><?php echo htmlspecialchars(implode(' · ', $meta)); ?></div>
+                    <?php endif; ?>
+                  </td>
+                  <td class="d-none d-md-table-cell"><?php echo htmlspecialchars($product['brand']) ?: '—'; ?></td>
+                  <td class="d-none d-md-table-cell"><?php echo htmlspecialchars($product['manufacturer']) ?: '—'; ?></td>
+                  <td class="d-none d-md-table-cell"><?php echo htmlspecialchars($product['scale']) ?: '—'; ?></td>
+                  <td>&#8377;<?php echo number_format((float)$product['price'], 2); ?></td>
+                  <td class="text-end">
+                    <a href="manage_products.php?action=delete&id=<?php echo (int)$product['id']; ?>"
+                       class="btn btn-sm btn-soft-danger delete-product-btn">Delete</a>
+                  </td>
+                </tr>
+              <?php endwhile; ?>
+            <?php else: ?>
+              <tr><td colspan="7" class="text-center" style="color:var(--text-faint);">No products found.</td></tr>
+            <?php endif; ?>
           </tbody>
         </table>
       </div>

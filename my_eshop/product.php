@@ -9,7 +9,7 @@ if (!isset($_GET['id']) || empty($_GET['id'])) {
 
 $product_id = intval($_GET['id']);
 
-$sql = "SELECT id, name, description, price, image FROM products WHERE id = ?";
+$sql = "SELECT id, name, brand, manufacturer, scale, description, price, image FROM products WHERE id = ?";
 $stmt = $conn->prepare($sql);
 if ($stmt === false) {
     die("Error preparing statement: " . $conn->error);
@@ -89,12 +89,32 @@ $login_url = 'login.php';
         </div>
         <div class="col-lg-6">
           <div class="eyebrow reveal d1">
-            My E-Shop
+            <?php echo htmlspecialchars($product['brand']) ?: 'My E-Shop'; ?>
           </div>
           <h2 class="mt-2 mb-3 reveal d2" style="font-size:2.4rem;">
             <?php echo htmlspecialchars($product['name']); ?>
           </h2>
-          <p class="detail-price reveal d2">&#8377;<?php echo htmlspecialchars($product['price']); ?></p>
+          <p class="detail-price reveal d2">&#8377;<?php echo number_format((float)$product['price'], 2); ?></p>
+
+          <?php
+          // Spec strip — only the attributes that are actually filled in.
+          $spec = array_filter([
+              'Marque'       => $product['brand'],
+              'Manufacturer' => $product['manufacturer'],
+              'Scale'        => $product['scale'],
+          ]);
+          ?>
+          <?php if ($spec): ?>
+            <dl class="spec-list reveal d2">
+              <?php foreach ($spec as $k => $v): ?>
+                <div class="spec-row">
+                  <dt><?php echo $k; ?></dt>
+                  <dd><?php echo htmlspecialchars($v); ?></dd>
+                </div>
+              <?php endforeach; ?>
+            </dl>
+          <?php endif; ?>
+
           <hr class="rule my-4 reveal d2">
           <div class="eyebrow reveal d3">Description</div>
           <p class="detail-desc mt-2 reveal d3">

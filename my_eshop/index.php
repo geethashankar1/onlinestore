@@ -1,12 +1,24 @@
 <?php
 require_once 'config/db.php';
+require_once 'config/catalogue.php';
 $page_title = 'My E-Shop — Diecast Models';
 include 'header.php';
 
 // Whole catalogue, newest first. Filtering is client-side (see the script at the
 // bottom) so browsing stays instant on a catalogue this size.
-$products    = $conn->query("SELECT id, name, description, price, image, created_at FROM products ORDER BY created_at DESC");
+$products    = $conn->query(
+    "SELECT id, name, brand, manufacturer, scale, description, price, image, created_at
+     FROM products ORDER BY created_at DESC"
+);
 $total_count = $products ? $products->num_rows : 0;
+
+// Filter chips are built from what is actually listed, so they never offer a
+// value that would return nothing.
+$filter_groups = [
+    'brand'        => ['label' => 'Marque',       'values' => catalogue_values($conn, 'brand')],
+    'manufacturer' => ['label' => 'Manufacturer', 'values' => catalogue_values($conn, 'manufacturer')],
+    'scale'        => ['label' => 'Scale',        'values' => catalogue_values($conn, 'scale')],
+];
 
 // Pre-populate the search box when arriving with ?search=
 $search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -60,6 +72,11 @@ $search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
 .mc-img{position:relative;aspect-ratio:1/1;background:var(--bg-2);overflow:hidden;}
 .mc-img img{width:100%;height:100%;object-fit:cover;display:block;}
 .mc-body{padding:16px;}
+.mc-spec{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-faint);margin-bottom:7px;}
+.mc-scale{position:absolute;top:10px;left:10px;background:var(--bg);color:var(--lime);
+  font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.14em;padding:5px 8px;
+  pointer-events:none;}
 .mc-name{font-size:15px;font-weight:700;margin:0 0 6px;line-height:1.35;font-family:var(--body);
   text-transform:none;letter-spacing:0;}
 .mc-desc{font-size:13px;color:var(--text-muted);margin:0 0 12px;
@@ -111,10 +128,16 @@ $search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
 <section class="ld-scales">
   <div class="container">
     <div class="scale-row">
-      <span class="lbl">Shop by class</span>
-      <button class="chip chip-on" onclick="selectScale(this,'')">All</button>
-      <?php foreach (['1:12','1:18','1:24','1:43','1:64','Vintage','JDM','F1','Rally'] as $sc): ?>
-        <button class="chip" onclick="selectScale(this,'<?php echo $sc; ?>')"><?php echo $sc; ?></button>
+      <span class="lbl">Filter</span>
+      <button class="chip chip-on" data-facet="" data-value="">All</button>
+      <?php foreach ($filter_groups as $facet => $g): ?>
+        <?php foreach ($g['values'] as $v): ?>
+          <button class="chip" data-facet="<?php echo $facet; ?>"
+                  data-value="<?php echo htmlspecialchars($v); ?>"
+                  title="<?php echo htmlspecialchars($g['label']); ?>">
+            <?php echo htmlspecialchars($v); ?>
+          </button>
+        <?php endforeach; ?>
       <?php endforeach; ?>
       <div class="shop-search">
         <input type="search" id="shopSearch" class="form-control" placeholder="Search models…"
@@ -137,14 +160,25 @@ $search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
 
     <?php if ($total_count > 0): ?>
       <div class="model-grid" id="modelGrid">
-        <?php while ($p = $products->fetch_assoc()): ?>
+        <?php while ($p = $products->fetch_assoc()):
+          $spec = array_filter([$p['manufacturer'], $p['scale']]);
+        ?>
           <a href="product.php?id=<?php echo (int)$p['id']; ?>" class="mc product-item"
-             data-name="<?php echo htmlspecialchars(strtolower($p['name'] . ' ' . $p['description'])); ?>">
+             data-name="<?php echo htmlspecialchars(strtolower($p['name'] . ' ' . $p['description'] . ' ' . $p['brand'] . ' ' . $p['manufacturer'])); ?>"
+             data-brand="<?php echo htmlspecialchars($p['brand']); ?>"
+             data-manufacturer="<?php echo htmlspecialchars($p['manufacturer']); ?>"
+             data-scale="<?php echo htmlspecialchars($p['scale']); ?>">
             <div class="mc-img">
               <img src="<?php echo htmlspecialchars(media_url($p['image'] ?? '')); ?>"
                    alt="<?php echo htmlspecialchars($p['name']); ?>" loading="lazy">
+              <?php if ($p['scale'] !== ''): ?>
+                <span class="mc-scale"><?php echo htmlspecialchars($p['scale']); ?></span>
+              <?php endif; ?>
             </div>
             <div class="mc-body">
+              <?php if ($spec): ?>
+                <div class="mc-spec"><?php echo htmlspecialchars(implode(' · ', $spec)); ?></div>
+              <?php endif; ?>
               <h3 class="mc-name"><?php echo htmlspecialchars($p['name']); ?></h3>
               <p class="mc-desc"><?php echo htmlspecialchars(mb_substr($p['description'], 0, 90)); ?></p>
               <div class="mc-price">&#8377;<?php echo number_format((float)$p['price']); ?></div>
@@ -199,34 +233,43 @@ $search_term = isset($_GET['search']) ? trim($_GET['search']) : '';
 
 <script>
 (function () {
-  var grid   = document.getElementById('modelGrid');
+  var grid = document.getElementById('modelGrid');
   if (!grid) return;
+
   var items  = Array.prototype.slice.call(grid.querySelectorAll('.product-item'));
   var search = document.getElementById('shopSearch');
   var none   = document.getElementById('noResults');
   var count  = document.getElementById('resultCount');
-  var scale  = '';
+
+  // One active facet at a time: {facet: 'brand', value: 'Porsche'} or null for All.
+  var active = null;
 
   function apply() {
     var q = (search.value || '').trim().toLowerCase();
     var shown = 0;
+
     items.forEach(function (el) {
-      var hay = el.dataset.name || '';
-      var ok  = (q === '' || hay.indexOf(q) !== -1) &&
-                (scale === '' || hay.indexOf(scale.toLowerCase()) !== -1);
+      var matchesSearch = q === '' || (el.dataset.name || '').indexOf(q) !== -1;
+      // Exact match on the attribute, so "1:64" never matches "1:6".
+      var matchesFacet  = active === null || el.dataset[active.facet] === active.value;
+      var ok = matchesSearch && matchesFacet;
       el.style.display = ok ? '' : 'none';
       if (ok) shown++;
     });
+
     none.style.display = shown === 0 ? '' : 'none';
-    count.textContent = shown + (shown === 1 ? ' model' : ' models');
+    count.textContent  = shown + (shown === 1 ? ' model' : ' models');
   }
 
-  window.selectScale = function (btn, value) {
-    document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('chip-on'); });
-    btn.classList.add('chip-on');
-    scale = value;
-    apply();
-  };
+  document.querySelectorAll('.chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      document.querySelectorAll('.chip').forEach(function (c) { c.classList.remove('chip-on'); });
+      chip.classList.add('chip-on');
+      var facet = chip.dataset.facet;
+      active = facet ? { facet: facet, value: chip.dataset.value } : null;
+      apply();
+    });
+  });
 
   search.addEventListener('input', apply);
   apply();   // honours ?search= on load

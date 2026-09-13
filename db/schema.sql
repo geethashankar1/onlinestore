@@ -36,14 +36,20 @@ CREATE TABLE IF NOT EXISTS users (
 -- products — `image` holds either an uploads/ filename or a full Cloudinary URL
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS products (
-  id          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
-  name        VARCHAR(255)  NOT NULL,
-  description TEXT          NOT NULL,
-  price       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-  image       VARCHAR(255)  NOT NULL DEFAULT '',
-  created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  name         VARCHAR(255)  NOT NULL,
+  brand        VARCHAR(80)   NOT NULL DEFAULT '',   -- car marque: Porsche, Nissan
+  manufacturer VARCHAR(80)   NOT NULL DEFAULT '',   -- model maker: Hot Wheels, Kyosho
+  scale        VARCHAR(20)   NOT NULL DEFAULT '',   -- 1:18, 1:64, …
+  description  TEXT          NOT NULL,
+  price        DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  image        VARCHAR(255)  NOT NULL DEFAULT '',
+  created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  KEY idx_products_created_at (created_at)
+  KEY idx_products_created_at (created_at),
+  KEY idx_products_brand (brand),
+  KEY idx_products_manufacturer (manufacturer),
+  KEY idx_products_scale (scale)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------
