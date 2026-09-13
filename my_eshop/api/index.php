@@ -14,15 +14,39 @@ $seg  = $path === '' ? [] : explode('/', $path);
 
 try {
 
-    // ---- GET /api/products  (optional ?search=) ----
+    // ---- GET /api/products  (optional ?search=, ?brand=, ?manufacturer=, ?scale=) ----
     if ($seg === ['products'] && $method === 'GET') {
         $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+
+        // Exact-match attribute filters, so "1:64" can't match "1:6".
+        $where  = [];
+        $params = [];
+        $types  = '';
+        foreach (['brand', 'manufacturer', 'scale'] as $facet) {
+            $v = isset($_GET[$facet]) ? trim($_GET[$facet]) : '';
+            if ($v !== '') {
+                $where[]  = "$facet = ?";
+                $params[] = $v;
+                $types   .= 's';
+            }
+        }
         if ($search !== '') {
-            $like = '%' . $search . '%';
-            $stmt = $conn->prepare("SELECT id,name,description,price,image,created_at FROM products WHERE name LIKE ? OR description LIKE ? ORDER BY created_at DESC");
-            $stmt->bind_param('ss', $like, $like);
-        } else {
-            $stmt = $conn->prepare("SELECT id,name,description,price,image,created_at FROM products ORDER BY created_at DESC");
+            // Searching brand/manufacturer too — "hot wheels" is a thing people type.
+            $where[] = '(name LIKE ? OR description LIKE ? OR brand LIKE ? OR manufacturer LIKE ?)';
+            $like    = '%' . $search . '%';
+            array_push($params, $like, $like, $like, $like);
+            $types  .= 'ssss';
+        }
+
+        $sql = "SELECT id,name,brand,manufacturer,scale,description,price,image,created_at FROM products";
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY created_at DESC';
+
+        $stmt = $conn->prepare($sql);
+        if ($params) {
+            $stmt->bind_param($types, ...$params);
         }
         $stmt->execute();
         $res = $stmt->get_result();
@@ -34,7 +58,7 @@ try {
     // ---- GET /api/products/{id} ----
     elseif (count($seg) === 2 && $seg[0] === 'products' && ctype_digit($seg[1]) && $method === 'GET') {
         $id = (int)$seg[1];
-        $stmt = $conn->prepare("SELECT id,name,description,price,image,created_at FROM products WHERE id = ?");
+        $stmt = $conn->prepare("SELECT id,name,brand,manufacturer,scale,description,price,image,created_at FROM products WHERE id = ?");
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $r = $stmt->get_result()->fetch_assoc();

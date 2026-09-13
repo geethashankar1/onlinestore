@@ -51,15 +51,18 @@ function product_shape(array $r): array {
     $img = (string)($r['image'] ?? '');
     $url = media_url($img);
     return [
-        'id'          => (int)$r['id'],
-        'name'        => $r['name'],
-        'description' => $r['description'],
-        'price'       => (float)$r['price'],
-        'image'       => $img,
+        'id'           => (int)$r['id'],
+        'name'         => $r['name'],
+        'brand'        => $r['brand']        ?? '',
+        'manufacturer' => $r['manufacturer'] ?? '',
+        'scale'        => $r['scale']        ?? '',
+        'description'  => $r['description'],
+        'price'        => (float)$r['price'],
+        'image'        => $img,
         // Always absolute so the mobile app can load it directly. Cloudinary
         // values are already absolute and pass through untouched.
-        'image_url'   => preg_match('#^https?://#i', $url) ? $url : base_url() . $url,
-        'created_at'  => $r['created_at'] ?? null,
+        'image_url'    => preg_match('#^https?://#i', $url) ? $url : base_url() . $url,
+        'created_at'   => $r['created_at'] ?? null,
     ];
 }
 
