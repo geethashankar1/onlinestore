@@ -6,11 +6,6 @@ $message      = '';
 $field_errors = [];
 $old          = [];
 
-// Store context — if registering from a seller storefront, lock to customer-only
-$store_slug = '';
-$raw = $_POST['store'] ?? $_GET['store'] ?? '';
-if (preg_match('/^[a-z0-9_-]+$/', $raw)) $store_slug = $raw;
-
 function password_rules(string $pw): array {
     $fails = [];
     if (strlen($pw) < 8)                    $fails[] = 'length';
@@ -46,9 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($password !== $confirm)
         $field_errors['confirm'] = 'Passwords do not match.';
 
-    // When registering from a store page, force customer role (no sellers via store signup)
-    $account_type = ($store_slug || ($_POST['account_type'] ?? 'customer') !== 'seller') ? 'customer' : 'seller';
-
     if (empty($field_errors)) {
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
         $stmt->bind_param('ss', $username, $email);
@@ -57,34 +49,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = "<div class='alert alert-danger'>Username or email already taken.</div>";
         } else {
             $hash  = password_hash($password, PASSWORD_DEFAULT);
+            $role  = 'customer';
             $stmt2 = $conn->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
-            $stmt2->bind_param('ssss', $username, $email, $hash, $account_type);
+            $stmt2->bind_param('ssss', $username, $email, $hash, $role);
             if ($stmt2->execute()) {
-                if ($account_type === 'seller') {
-                    // Log them in immediately and send to store setup
-                    session_regenerate_id(true);
-                    $_SESSION['user_id']  = $stmt2->insert_id;
-                    $_SESSION['username'] = $username;
-                    $_SESSION['email']    = $email;
-                    $_SESSION['role']     = 'seller';
-                    $_SESSION['is_admin'] = true;
-                    $_SESSION['flash']    = 'Welcome, ' . $username . '. Let\'s set up your store.';
-                    header('Location: seller/setup.php'); exit;
-                }
-                if ($store_slug) {
-                    // Auto-login and return to the store
-                    session_regenerate_id(true);
-                    $_SESSION['user_id']  = $stmt2->insert_id;
-                    $_SESSION['username'] = $username;
-                    $_SESSION['email']    = $email;
-                    $_SESSION['role']     = 'customer';
-                    $_SESSION['is_admin'] = false;
-                    $_SESSION['flash']    = 'Welcome, ' . $username . '. Your account is ready.';
-                    header('Location: /shop/' . $store_slug); exit;
-                }
-                // Log the new customer straight in. Making someone re-enter the
-                // credentials they chose two seconds ago is friction for no gain,
-                // and the seller / store-referral paths above already do this.
+                // Log the new customer straight in — making someone re-enter the
+                // credentials they chose two seconds ago is friction for no gain.
                 session_regenerate_id(true);
                 $_SESSION['user_id']  = $stmt2->insert_id;
                 $_SESSION['username'] = $username;
@@ -137,28 +107,6 @@ include 'header.php';
         <?php echo $message; ?>
 
         <form action="register.php" method="post" id="registerForm" novalidate>
-          <?php if ($store_slug): ?>
-            <input type="hidden" name="store" value="<?php echo htmlspecialchars($store_slug); ?>">
-            <input type="hidden" name="account_type" value="customer">
-          <?php else: ?>
-          <!-- Account type — only shown on main site, not from a store page -->
-          <div class="mb-4">
-            <label class="form-label">I want to…</label>
-            <div class="d-flex gap-3">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="account_type" id="typeCustomer"
-                       value="customer" <?php echo (($_POST['account_type']??'customer')==='customer')?'checked':''; ?>>
-                <label class="form-check-label" for="typeCustomer">Shop as a customer</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="account_type" id="typeSeller"
-                       value="seller" <?php echo (($_POST['account_type']??'')==='seller')?'checked':''; ?>>
-                <label class="form-check-label" for="typeSeller">Sell on this platform</label>
-              </div>
-            </div>
-          </div>
-          <?php endif; ?>
-
           <!-- Username -->
           <div class="mb-3">
             <label for="username" class="form-label">Username</label>
@@ -216,7 +164,7 @@ include 'header.php';
 
         <p class="text-center mt-4 mb-0" style="color:var(--muted);">
           Already have an account?
-          <a href="login.php<?php echo $store_slug ? '?store='.htmlspecialchars($store_slug) : ''; ?>">Login here</a>.
+          <a href="login.php">Login here</a>.
         </p>
       </div>
     </div>

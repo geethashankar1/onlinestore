@@ -3,13 +3,8 @@
 require_once 'config/db.php';
 $message = '';
 
-// Store context — safe slug passed via GET or POST (alphanumeric + hyphens/underscores)
-$store_slug = '';
-$raw = $_POST['store'] ?? $_GET['store'] ?? '';
-if (preg_match('/^[a-z0-9_-]+$/', $raw)) $store_slug = $raw;
-
 if (isset($_SESSION['user_id'])) {
-    header('Location: ' . ($store_slug ? '/shop/' . $store_slug : 'index.php'));
+    header('Location: index.php');
     exit;
 }
 
@@ -36,15 +31,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['username'] = $user['username'];
                     $_SESSION['email']    = $user['email'];
                     $_SESSION['role']     = $user['role'];
-                    $_SESSION['is_admin'] = in_array($user['role'], ['seller', 'super_admin'], true);
+                    $_SESSION['is_admin'] = ($user['role'] === 'super_admin');
 
-                    if ($user['role'] === 'seller') {
-                        header("Location: seller/welcome.php"); exit;
-                    } elseif ($user['role'] === 'super_admin') {
-                        header("Location: admin/manage_products.php"); exit;
-                    }
-                    // Customer: return to the store they came from, or main index
-                    header('Location: ' . ($store_slug ? '/shop/' . $store_slug : 'index.php')); exit;
+                    header('Location: ' . ($_SESSION['is_admin']
+                        ? 'admin/manage_products.php'
+                        : 'index.php')); exit;
                 } else {
                     $message = "<div class='alert alert-danger'>Invalid email/username or password.</div>";
                 }
@@ -57,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 }
-$register_url = 'register.php' . ($store_slug ? '?store=' . htmlspecialchars($store_slug) : '');
+$register_url = 'register.php';
 $page_title   = "Login";
 include 'header.php';
 ?>
@@ -70,9 +61,6 @@ include 'header.php';
         </div>
         <?php echo $message; ?>
         <form action="login.php" method="post">
-          <?php if ($store_slug): ?>
-            <input type="hidden" name="store" value="<?php echo htmlspecialchars($store_slug); ?>">
-          <?php endif; ?>
           <div class="mb-3">
             <label for="email_or_username" class="form-label">Email or Username</label>
             <input type="text" id="email_or_username" name="email_or_username" class="form-control" required>

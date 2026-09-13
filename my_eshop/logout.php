@@ -18,9 +18,6 @@ if (ini_get("session.use_cookies")) {
 // Finally, destroy the session.
 session_destroy();
 
-// Redirect: back to seller storefront if we came from one, otherwise login
-$store = isset($_GET['store']) && preg_match('/^[a-z0-9_-]+$/', $_GET['store'])
-         ? $_GET['store'] : '';
-header('Location: ' . ($store ? '/shop/' . $store : 'login.php'));
+header('Location: login.php');
 exit;
 ?>

@@ -67,21 +67,6 @@ $cart_items  = $_SESSION['cart'];
 $total_price = 0;
 $page_title  = "Your Cart";
 
-// Resolve store context
-$store_slug = '';
-if (isset($_GET['store']) && preg_match('/^[a-z0-9_-]+$/', $_GET['store'])) {
-    $store_slug = $_GET['store'];
-} elseif (isset($_SESSION['current_store_slug']) && preg_match('/^[a-z0-9_-]+$/', $_SESSION['current_store_slug'])) {
-    $store_slug = $_SESSION['current_store_slug'];
-}
-if ($store_slug !== '') {
-    $_SESSION['current_store_slug'] = $store_slug;
-}
-$in_store = ($store_slug !== '');
-if ($in_store) {
-    $nav_mode = 'storefront';
-}
-
 include 'header.php';
 ?>
 
@@ -169,7 +154,7 @@ include 'header.php';
               </span>
             </div>
             <a href="checkout.php" class="btn w-100">Proceed to checkout</a>
-            <a href="<?php echo $in_store ? '/shop/' . $store_slug : 'index.php'; ?>"
+            <a href="index.php"
                class="d-block text-center mt-3 nav-link-x">Continue shopping</a>
           </div>
         </div>
@@ -178,7 +163,7 @@ include 'header.php';
     <?php else: ?>
       <div class="surface p-5 text-center">
         <p class="mb-3" style="color:var(--muted);">Your cart is empty.</p>
-        <a href="<?php echo $in_store ? '/shop/' . $store_slug : 'index.php'; ?>" class="btn">Continue shopping</a>
+        <a href="index.php" class="btn">Continue shopping</a>
       </div>
     <?php endif; ?>
   </div>

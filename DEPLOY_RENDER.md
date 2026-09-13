@@ -6,7 +6,7 @@ database and image storage move to separate free services because Render's free
 tier provides neither.
 
 ```
-GitHub push ─► GitHub Actions ─► GHCR image ─► Render Web Service ─┬─► Aiven MySQL
+GitHub push ─► GitHub Actions ─► GHCR image ─► Render Web Service ─┬─► TiDB Serverless
                  (build+lint)                    (PHP 8.3/Apache)  └─► Cloudinary
 ```
 
@@ -15,7 +15,7 @@ GitHub push ─► GitHub Actions ─► GHCR image ─► Render Web Service �
 | Piece | DigitalOcean | Render |
 |---|---|---|
 | Web server | nginx container + certbot | Render's edge — **nginx/certbot no longer used** |
-| Database | `mysql:8.0` container | Aiven free MySQL (external, TLS) |
+| Database | `mysql:8.0` container | TiDB Cloud Serverless (external, TLS) |
 | Uploaded images | `uploads_data` Docker volume | Cloudinary (free disk is ephemeral) |
 | CI/CD | Jenkins on the same box | GitHub Actions |
 | TLS | Let's Encrypt via certbot | Render managed certificate |
@@ -30,34 +30,28 @@ development (`docker compose up`) and as a record of the Jenkins pipeline.
   wake. Unavoidable on the free plan — the paid Starter tier removes it.
 - **No persistent disk.** This is why images go to Cloudinary. Anything else
   written to the container filesystem is lost on restart.
-- Aiven free MySQL is 1GB storage / 1GB RAM, single node.
+- TiDB Serverless is free with a monthly Request Unit quota. It does **not**
+  power off when idle — which is why we left Aiven, whose free plan does.
 
 ---
 
-## Step 1 — Database (Aiven free MySQL)
+## Step 1 — Database (TiDB Cloud Serverless)
 
-1. Sign up at https://aiven.io, create a **MySQL** service on the **Free** plan.
-2. Pick a region close to you (`google-asia-south1` for India).
-3. Once it's running, open the service overview and note **Host**, **Port**,
-   **User**, **Password**, **Database name**, and download the **CA certificate**.
-4. Load the schema. From your machine, with the MySQL client installed:
-
-```bash
-mysql --host=<HOST> --port=<PORT> --user=avnadmin --password=<PASS> \
-      --ssl-mode=REQUIRED defaultdb < db/init.sql
-mysql --host=<HOST> --port=<PORT> --user=avnadmin --password=<PASS> \
-      --ssl-mode=REQUIRED defaultdb < db/migrations/001_add_role_to_users.sql
-mysql --host=<HOST> --port=<PORT> --user=avnadmin --password=<PASS> \
-      --ssl-mode=REQUIRED defaultdb < db/migrations/002_multi_tenant.sql
-```
-
-No local MySQL client? Run it through Docker instead:
+1. Sign up at https://tidbcloud.com and create a **Serverless** cluster
+   (region `ap-southeast-1` for India).
+2. Click **Connect**, generate a password, and note **Host**, **Port** (4000),
+   **User** (`<prefix>.root`) and **Password**.
+3. Create the database and load the schema:
 
 ```bash
-docker run --rm -i -v "$PWD:/w" -w /w mysql:8.0 \
-  mysql --host=<HOST> --port=<PORT> --user=avnadmin --password=<PASS> \
-        --ssl-mode=REQUIRED defaultdb < db/init.sql
+docker run --rm -i mysql:8.0 mysql   --host=<HOST> --port=4000 --user=<PREFIX>.root --password=<PASS>   --ssl-mode=VERIFY_IDENTITY --ssl-ca=/etc/pki/tls/certs/ca-bundle.crt   -e "CREATE DATABASE IF NOT EXISTS eshop"
+
+docker run --rm -i -v "$PWD:/w" -w /w mysql:8.0 sh -c   "mysql --host=<HOST> --port=4000 --user=<PREFIX>.root --password=<PASS>    --ssl-mode=VERIFY_IDENTITY --ssl-ca=/etc/pki/tls/certs/ca-bundle.crt eshop" < db/schema.sql
 ```
+
+> Use `db/schema.sql`, not `init.sql` + migrations: migration 002 uses stored
+> procedures, which TiDB does not support. `schema.sql` declares the final shape
+> directly and runs on both MySQL and TiDB.
 
 ## Step 2 — Image storage (Cloudinary)
 
@@ -91,12 +85,13 @@ Settings → Registry Credentials) with a GitHub PAT that has `read:packages`.
 
 | Key | Value |
 |---|---|
-| `DB_HOST` | Aiven host |
-| `DB_PORT` | Aiven port |
-| `DB_USER` | `avnadmin` |
-| `DB_PASS` | Aiven password |
-| `DB_NAME` | `defaultdb` |
+| `DB_HOST` | TiDB gateway host |
+| `DB_PORT` | `4000` |
+| `DB_USER` | `<prefix>.root` |
+| `DB_PASS` | TiDB password |
+| `DB_NAME` | `eshop` |
 | `DB_SSL` | `true` |
+| `DB_SSL_CA` | `/etc/ssl/certs/ca-certificates.crt` |
 | `CLOUDINARY_CLOUD_NAME` | from Cloudinary |
 | `CLOUDINARY_API_KEY` | from Cloudinary |
 | `CLOUDINARY_API_SECRET` | from Cloudinary |
@@ -106,9 +101,9 @@ Settings → Registry Credentials) with a GitHub PAT that has `read:packages`.
 
 6. **Create Web Service.** First deploy takes a few minutes.
 
-> `DB_SSL=true` without `DB_SSL_CA` encrypts the connection but does **not**
-> verify Aiven's certificate. To verify it properly, commit Aiven's CA as
-> `my_eshop/config/aiven-ca.pem` and set `DB_SSL_CA=/var/www/html/config/aiven-ca.pem`.
+> TiDB serves a publicly trusted certificate, so `DB_SSL_CA` points at the
+> container's system CA bundle and you get full verification with no
+> provider-specific CA file to maintain.
 
 ## Step 5 — Deploy hook + GitHub Actions
 
@@ -143,8 +138,8 @@ curl -I https://myeshopstore.online          # expect 200 (first hit may take ~5
 curl -s https://myeshopstore.online/api/products | head
 ```
 
-Then in the browser: log in as `admin` / `admin123` (**change this immediately**),
-create a seller, upload a product image, and confirm the image URL points at
+Then in the browser: log in as `admin` (**change the seed password immediately**),
+add a product with an image, and confirm the image URL points at
 `res.cloudinary.com`. That last check is the one that proves the ephemeral-disk
 problem is actually solved — if the URL is `/uploads/...`, the Cloudinary env
 vars aren't reaching the container.
@@ -159,8 +154,8 @@ Apache isn't bound to, and check the Render logs.
 
 **"Database connection failed"** — set `APP_DEBUG=true` temporarily to see the
 real error in the browser, or read the Render logs (the detail is always logged).
-Usual causes: wrong port, `DB_SSL` unset (Aiven refuses plaintext), or the Aiven
-service still starting.
+Usual causes: wrong port, a mistyped password (watch for `I`/`l`/`1` confusion),
+or `DB_SSL` unset — TiDB refuses plaintext connections.
 
 **Images upload but vanish** — the Cloudinary vars aren't set, so it fell back to
 the ephemeral local disk. Check the stored value in `products.image`: a Cloudinary

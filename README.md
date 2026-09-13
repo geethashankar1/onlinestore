@@ -36,9 +36,13 @@ A **local development** seed account is created on first start:
 > immediately on any deployment** — the seed values are public in this repo, so a
 > deployed instance running them is effectively unauthenticated.
 
-Roles live in `users.role` (`super_admin` / `seller` / `customer`), added by
-`db/migrations/001_add_role_to_users.sql`. To promote an account, set its `role`
-to `super_admin`.
+Roles live in `users.role` (`super_admin` / `customer`). The shop has a single
+owner: `super_admin` manages products and orders, everyone else is a customer.
+To promote an account, set its `role` to `super_admin`.
+
+> This started as a multi-tenant marketplace (sellers with their own branded
+> storefronts at `/shop/{slug}`). Migration 003 collapsed it to a single-vendor
+> shop; that version is preserved on the **`multi-tenant`** branch.
 
 ## Database
 Tables (cart is **session-based**, so there is no cart table):
@@ -50,7 +54,7 @@ Tables (cart is **session-based**, so there is no cart table):
 | `orders` | one per checkout | `user_id` → `users.id` |
 | `order_items` | line items per order | `order_id` → `orders.id`, `product_id` → `products.id` |
 
-Full DDL: `db/init.sql`.
+Full DDL: `db/schema.sql` for a fresh database, `db/migrations/` to evolve an existing one.
 
 ## Configuration
 DB settings come from environment variables (see `docker-compose.yml`). Defaults

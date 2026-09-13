@@ -2,20 +2,8 @@
 // product.php
 require_once 'config/db.php';
 
-// Resolve store context: GET param wins, then sticky session, then none
-$store_slug = '';
-if (isset($_GET['store']) && preg_match('/^[a-z0-9_-]+$/', $_GET['store'])) {
-    $store_slug = $_GET['store'];
-} elseif (isset($_SESSION['current_store_slug']) && preg_match('/^[a-z0-9_-]+$/', $_SESSION['current_store_slug'])) {
-    $store_slug = $_SESSION['current_store_slug'];
-}
-if ($store_slug !== '') {
-    $_SESSION['current_store_slug'] = $store_slug;
-}
-$in_store = ($store_slug !== '');
-
 if (!isset($_GET['id']) || empty($_GET['id'])) {
-    header($in_store ? 'Location: /shop/' . $store_slug : 'Location: index.php');
+    header('Location: index.php');
     exit;
 }
 
@@ -54,9 +42,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['wishlist_action']) &&
         $wl_message = 'removed';
     }
     $redir = 'product.php?id=' . $product_id . '&wl=' . $wl_message;
-    if ($in_store) {
-        $redir .= '&store=' . $store_slug;
-    }
     header('Location: ' . $redir);
     exit;
 }
@@ -74,11 +59,8 @@ if (isset($_SESSION['user_id'])) {
 
 if ($product === null) {
     $page_title = 'Product not found';
-    if ($in_store) {
-        $nav_mode = 'storefront';
-    }
     include 'header.php';
-    $back = $in_store ? '/shop/' . $store_slug : 'index.php';
+    $back = 'index.php';
     echo '<section class="page"><div class="container"><div class="surface p-5 text-center">'
        . '<h2 class="mb-3">Product not found</h2>'
        . '<p class="mb-4" style="color:var(--muted);">That product does not exist or was removed.</p>'
@@ -89,16 +71,13 @@ if ($product === null) {
 }
 
 $page_title = $product['name'];
-if ($in_store) {
-    $nav_mode = 'storefront';
-}
 include 'header.php';
 
 $img = htmlspecialchars(media_url($product['image'] ?? ''));
 
-$back_url = $in_store ? '/shop/' . $store_slug : 'index.php';
-$cart_url  = 'cart.php?action=add&id=' . $product['id'] . ($in_store ? '&store=' . $store_slug : '');
-$login_url = 'login.php' . ($in_store ? '?store=' . $store_slug : '');
+$back_url = 'index.php';
+$cart_url  = 'cart.php?action=add&id=' . $product['id'];
+$login_url = 'login.php';
 ?>
   <section class="page">
     <div class="container">
@@ -110,7 +89,7 @@ $login_url = 'login.php' . ($in_store ? '?store=' . $store_slug : '');
         </div>
         <div class="col-lg-6">
           <div class="eyebrow reveal d1">
-            <?php echo $in_store ? htmlspecialchars($store_slug) : 'My E-Shop'; ?>
+            My E-Shop
           </div>
           <h2 class="mt-2 mb-3 reveal d2" style="font-size:2.4rem;">
             <?php echo htmlspecialchars($product['name']); ?>
