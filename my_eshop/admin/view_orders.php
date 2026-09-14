@@ -70,7 +70,7 @@ include '../header.php';
                     echo "<tr>";
                     echo "<td>#" . $order['id'] . "</td>";
                     echo "<td>" . htmlspecialchars($order['customer_name']) . "<br><small style='color:var(--muted);'>" . htmlspecialchars($order['customer_email']) . "</small></td>";
-                    echo "<td>$" . number_format($order['total_amount'], 2) . "</td>";
+                    echo "<td>&#8377;" . number_format($order['total_amount'], 2) . "</td>";
                     echo "<td>" . date("M d, Y H:i", strtotime($order['created_at'])) . "</td>";
                     echo "<td><span class='status-badge'>" . htmlspecialchars($order['status']) . "</span></td>";
                     echo "<td style='max-width:220px;font-size:.88rem;color:var(--text-muted);'>" . nl2br(htmlspecialchars($order['shipping_address'])) . "</td>";

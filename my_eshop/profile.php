@@ -153,7 +153,7 @@ include 'header.php';
                 </a>
                 <div class="pc-body">
                   <div class="pc-name"><?php echo htmlspecialchars($wi['name']); ?></div>
-                  <div class="pc-price mt-1 mb-3">$<?php echo number_format($wi['price'], 2); ?></div>
+                  <div class="pc-price mt-1 mb-3">&#8377;<?php echo number_format($wi['price'], 2); ?></div>
                   <div class="d-flex gap-2">
                     <a href="cart.php?action=add&id=<?php echo $wi['id']; ?>" class="btn btn-sm flex-fill">Add to cart</a>
                     <form method="post">
@@ -189,7 +189,7 @@ include 'header.php';
                   <div style="color:var(--muted);font-size:.85rem;"><?php echo date('F j, Y · g:i A', strtotime($order['created_at'])); ?></div>
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                  <span style="font-size:1.1rem;color:var(--text);font-weight:600;">$<?php echo number_format($order['total_amount'], 2); ?></span>
+                  <span style="font-size:1.1rem;color:var(--text);font-weight:600;">&#8377;<?php echo number_format($order['total_amount'], 2); ?></span>
                   <span class="status-badge"><?php echo htmlspecialchars($order['status']); ?></span>
                 </div>
               </div>
@@ -199,7 +199,7 @@ include 'header.php';
                 <?php foreach ($order['items'] as $item): ?>
                   <div class="d-flex justify-content-between py-1" style="font-size:.9rem;">
                     <span><?php echo htmlspecialchars($item['name']); ?> <span style="color:var(--muted);">×<?php echo $item['quantity']; ?></span></span>
-                    <span>$<?php echo number_format($item['price_at_purchase'] * $item['quantity'], 2); ?></span>
+                    <span>&#8377;<?php echo number_format($item['price_at_purchase'] * $item['quantity'], 2); ?></span>
                   </div>
                 <?php endforeach; ?>
               </div>

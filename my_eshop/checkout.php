@@ -444,7 +444,7 @@ include 'header.php';
                    style="border-bottom:1px solid var(--line);font-size:.9rem;">
                 <span><?php echo htmlspecialchars($item['name']); ?>
                       <span style="color:var(--muted);">×<?php echo $item['quantity']; ?></span></span>
-                <span>$<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span>
+                <span>&#8377;<?php echo number_format($item['price'] * $item['quantity'], 2); ?></span>
               </div>
             <?php endforeach; ?>
             <div class="d-flex justify-content-between align-items-center mt-3 pt-1">
