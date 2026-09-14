@@ -66,6 +66,36 @@ try {
         respond(200, ['product' => product_shape($r)]);
     }
 
+    // ---- GET /api/categories ----
+    // The full browsable vocabulary, not just what happens to be in stock: every
+    // known marque / manufacturer / scale, each with how many products carry it.
+    // A zero count is meaningful — the client shows the category and lets the
+    // filtered list say "no products found" — so they are not filtered out here.
+    elseif ($seg === ['categories'] && $method === 'GET') {
+        require_once dirname(__DIR__) . '/config/catalogue.php';
+
+        $out = [];
+        foreach (['brand', 'manufacturer', 'scale'] as $facet) {
+            // Counts for the values actually used, in one grouped query rather
+            // than a query per value.
+            $counts = [];
+            $res = $conn->query(
+                "SELECT `$facet` AS v, COUNT(*) AS c FROM products WHERE `$facet` <> '' GROUP BY `$facet`"
+            );
+            if ($res) {
+                while ($r = $res->fetch_assoc()) $counts[$r['v']] = (int)$r['c'];
+            }
+
+            // catalogue_suggestions() already merges the seed list with what is
+            // in use, so this covers both.
+            $out[$facet] = array_map(
+                fn($v) => ['value' => $v, 'count' => $counts[$v] ?? 0],
+                catalogue_suggestions($conn, $facet)
+            );
+        }
+        respond(200, ['categories' => $out]);
+    }
+
     // ---- POST /api/auth/register ----
     elseif ($seg === ['auth', 'register'] && $method === 'POST') {
         $b = body();
