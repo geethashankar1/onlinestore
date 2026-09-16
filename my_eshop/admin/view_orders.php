@@ -13,7 +13,9 @@ $message = '';
 // Handle status update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     $order_id_update = intval($_POST['order_id']);
-    $new_status = $conn->real_escape_string($_POST['status']);
+    // Bound as a parameter below, so it must not be pre-escaped — that would
+    // store the escaping itself.
+    $new_status = trim($_POST['status'] ?? '');
 
     $stmt_update = $conn->prepare("UPDATE orders SET status = ? WHERE id = ?");
     if ($stmt_update) {

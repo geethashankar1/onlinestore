@@ -9,7 +9,11 @@ if (isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $email_or_username = $conn->real_escape_string(trim($_POST['email_or_username']));
+    // No real_escape_string() here: the value goes into a prepared statement,
+    // which escapes it already. Escaping first stored a literal backslash in the
+    // comparison, so anyone whose username or email contained a quote could log
+    // in through the API but never through this form.
+    $email_or_username = trim($_POST['email_or_username'] ?? '');
     $password = $_POST['password'];
 
     if (empty($email_or_username) || empty($password)) {
