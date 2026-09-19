@@ -237,8 +237,12 @@ try {
     elseif ($seg === ['wishlist'] && $method === 'GET') {
         $auth   = require_auth();
         $userId = (int)$auth['sub'];
+        // Full product shape, not a summary: a saved model is tapped through to
+        // the detail screen, which wants brand, scale and an absolute image URL
+        // like any other product. 'product_id' stays as an alias so an older
+        // client reading that key keeps working.
         $stmt = $conn->prepare("
-            SELECT p.id, p.name, p.price, p.image, w.created_at AS added_at
+            SELECT p.*, w.created_at AS added_at
             FROM wishlist w
             JOIN products p ON p.id = w.product_id
             WHERE w.user_id = ?
@@ -249,11 +253,8 @@ try {
         $res = $stmt->get_result();
         $items = [];
         while ($r = $res->fetch_assoc()) {
-            $items[] = [
+            $items[] = product_shape($r) + [
                 'product_id' => (int)$r['id'],
-                'name'       => $r['name'],
-                'price'      => (float)$r['price'],
-                'image'      => $r['image'],
                 'added_at'   => $r['added_at'],
             ];
         }
