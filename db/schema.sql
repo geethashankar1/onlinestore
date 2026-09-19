@@ -13,7 +13,8 @@
 -- migrations to evolve a database that already holds data.
 --
 -- Tables are ordered so every foreign-key target exists before it is referenced.
--- The cart is session-based ($_SESSION['cart']); there is deliberately no cart table.
+-- A signed-in cart lives in cart_items so the website and the mobile app share it;
+-- a guest cart is still $_SESSION['cart'], and is merged in on login.
 
 SET NAMES utf8mb4;
 
@@ -99,6 +100,23 @@ CREATE TABLE IF NOT EXISTS wishlist (
   UNIQUE KEY uq_wishlist (user_id, product_id),
   CONSTRAINT fk_wl_user    FOREIGN KEY (user_id)    REFERENCES users    (id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_wl_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- cart_items — one row per (user, product); the shared web + app cart
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS cart_items (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id    INT UNSIGNED NOT NULL,
+  product_id INT UNSIGNED NOT NULL,
+  quantity   INT UNSIGNED NOT NULL DEFAULT 1,
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_cart_user_product (user_id, product_id),
+  KEY idx_cart_user (user_id),
+  CONSTRAINT fk_cart_user    FOREIGN KEY (user_id)    REFERENCES users    (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_cart_product FOREIGN KEY (product_id) REFERENCES products (id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------------

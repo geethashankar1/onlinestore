@@ -70,6 +70,9 @@ $conn->set_charset("utf8mb4");
 // Image storage helpers (Cloudinary in production, local uploads/ in dev).
 require_once __DIR__ . '/media.php';
 
+// Cart helpers — database-backed for signed-in visitors, session for guests.
+require_once __DIR__ . '/cart.php';
+
 // Start session if not already started - useful for cart, login status
 if (session_status() == PHP_SESSION_NONE) {
     session_start();

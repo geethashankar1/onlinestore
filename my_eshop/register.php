@@ -62,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['role']     = 'customer';
                 $_SESSION['is_admin'] = false;
                 $_SESSION['flash']    = 'Welcome, ' . $username . '. Your account is ready.';
+                cart_adopt_session($conn, (int)$stmt2->insert_id);
                 header('Location: index.php'); exit;
             } else {
                 $message = "<div class='alert alert-danger'>Registration failed. Please try again.</div>";

@@ -8,7 +8,8 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
-if (empty($_SESSION['cart']) && !isset($_GET['razorpay_success'])) {
+$cart_items = cart_items($conn);
+if (empty($cart_items) && !isset($_GET['razorpay_success'])) {
     header("Location: cart.php");
     exit;
 }
@@ -17,7 +18,6 @@ $errors       = [];
 $old          = [];
 $order_done   = false;
 $order_id     = null;
-$cart_items   = $_SESSION['cart'] ?? [];
 $total_amount = array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $cart_items));
 
 // ── Razorpay redirect (after modal payment + verify) ──────────────────────
@@ -91,7 +91,7 @@ if (!$order_done && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 [$ok, $oid] = create_db_order($conn, (int)$_SESSION['user_id'],
                                               $total_amount, $addr, 'Paid', $cart_items);
                 if ($ok) {
-                    $_SESSION['cart'] = [];
+                    cart_clear($conn);
                     $order_done = true;
                     $order_id   = $oid;
                 } else {

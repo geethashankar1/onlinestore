@@ -3,7 +3,9 @@
 // Optional vars a page may set before including: $page_title (string), $nav_mode ('shop'|'admin').
 $page_title = $page_title ?? 'My E-Shop';
 $nav_mode   = $nav_mode   ?? 'shop';
-$cart_count = isset($_SESSION['cart']) ? count($_SESSION['cart']) : 0;
+// Sum of quantities, not number of lines — two of one model reads as 2.
+// cart_count() picks the account's cart when signed in, the session otherwise.
+$cart_count = isset($conn) ? cart_count($conn) : 0;
 $is_admin   = isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
 $logged_in  = isset($_SESSION['user_id']);
 ?>

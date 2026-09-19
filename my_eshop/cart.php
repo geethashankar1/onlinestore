@@ -2,68 +2,39 @@
 // cart.php
 require_once 'config/db.php';
 
-if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = array();
-}
+// Signed in, the cart lives in the database and is the same cart the mobile
+// app sees; as a guest it lives in the session until they log in. Both go
+// through config/cart.php so the two never drift apart.
 
 // Add item to cart
 if (isset($_GET['action']) && $_GET['action'] == 'add' && isset($_GET['id'])) {
-    $product_id = intval($_GET['id']);
-    $stmt = $conn->prepare("SELECT id, name, price, image FROM products WHERE id = ?");
-    if ($stmt) {
-        $stmt->bind_param("i", $product_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($product_details = $result->fetch_assoc()) {
-            if (isset($_SESSION['cart'][$product_id])) {
-                $_SESSION['cart'][$product_id]['quantity']++;
-            } else {
-                $_SESSION['cart'][$product_id] = array(
-                    'id'       => $product_id,
-                    'name'     => $product_details['name'],
-                    'price'    => $product_details['price'],
-                    'image'    => $product_details['image'],
-                    'quantity' => 1
-                );
-            }
-        }
-        $stmt->close();
-    }
+    cart_add($conn, intval($_GET['id']));
     header('Location: cart.php');
     exit;
 }
 
 // Update item quantity (POST from form)
 if (isset($_POST['action']) && $_POST['action'] == 'update' && isset($_POST['product_id'])) {
-    $product_id_update = intval($_POST['product_id']);
-    $quantity_update   = intval($_POST['quantity']);
-    if ($quantity_update > 0 && isset($_SESSION['cart'][$product_id_update])) {
-        $_SESSION['cart'][$product_id_update]['quantity'] = $quantity_update;
-    } elseif ($quantity_update <= 0 && isset($_SESSION['cart'][$product_id_update])) {
-        unset($_SESSION['cart'][$product_id_update]);
-    }
+    cart_set_qty($conn, intval($_POST['product_id']), intval($_POST['quantity']));
     header('Location: cart.php');
     exit;
 }
 
 // Remove item
 if (isset($_GET['action']) && $_GET['action'] == 'remove' && isset($_GET['id'])) {
-    $product_id_remove = intval($_GET['id']);
-    if (isset($_SESSION['cart'][$product_id_remove])) {
-        unset($_SESSION['cart'][$product_id_remove]);
-    }
+    cart_remove($conn, intval($_GET['id']));
     header('Location: cart.php');
     exit;
 }
 
 // Clear cart
 if (isset($_GET['action']) && $_GET['action'] == 'clear') {
-    $_SESSION['cart'] = array();
+    cart_clear($conn);
     header('Location: cart.php');
     exit;
 }
 
-$cart_items  = $_SESSION['cart'];
+$cart_items  = cart_items($conn);
 $total_price = 0;
 $page_title  = "Your Cart";
 

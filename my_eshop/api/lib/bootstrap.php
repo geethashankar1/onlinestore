@@ -7,10 +7,14 @@ require_once __DIR__ . '/jwt.php';
 // be Cloudinary URLs. This file does not load config/db.php (it keeps its own
 // session-less connection), so media.php has to be required directly.
 require_once dirname(__DIR__, 2) . '/config/media.php';
+// Cart storage, shared with the website so both read the same cart_items rows.
+// Only the cart_db_* half is used here — the session-backed half needs a
+// session, which this endpoint deliberately does not have.
+require_once dirname(__DIR__, 2) . '/config/cart.php';
 
 // ---- headers / CORS (dev: open. Lock the origin down before production) ----
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Content-Type: application/json; charset=utf-8');
 
@@ -64,6 +68,31 @@ function product_shape(array $r): array {
         'image_url'    => preg_match('#^https?://#i', $url) ? $url : base_url() . $url,
         'created_at'   => $r['created_at'] ?? null,
     ];
+}
+
+/**
+ * A user's cart as the mobile app expects it: newest-first is wrong here —
+ * the order is the order lines were added, matching the website.
+ *
+ * `id` is the cart_items row id, which is what the app stores and sends back
+ * in PUT/DELETE /cart/{id}. Prices and names come from the products table on
+ * every read, so a price change is never served from a stale cart row.
+ */
+function cart_api_items(mysqli $conn, int $userId): array {
+    $out = [];
+    foreach (cart_db_items($conn, $userId) as $i) {
+        $url = media_url((string)$i['image']);
+        $out[] = [
+            'id'         => $i['item_id'],
+            'product_id' => $i['id'],
+            'name'       => $i['name'],
+            'price'      => (float)$i['price'],
+            'image'      => $i['image'],
+            'image_url'  => preg_match('#^https?://#i', $url) ? $url : base_url() . $url,
+            'quantity'   => (int)$i['quantity'],
+        ];
+    }
+    return $out;
 }
 
 // ---- auth ----

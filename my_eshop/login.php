@@ -37,6 +37,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION['role']     = $user['role'];
                     $_SESSION['is_admin'] = ($user['role'] === 'super_admin');
 
+                    // Anything added before signing in belongs to this account
+                    // now, alongside whatever the phone already put there.
+                    cart_adopt_session($conn, (int)$user['id']);
+
                     header('Location: ' . ($_SESSION['is_admin']
                         ? 'admin/manage_products.php'
                         : 'index.php')); exit;

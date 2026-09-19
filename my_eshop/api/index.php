@@ -293,6 +293,69 @@ try {
         respond(200, ['message' => 'Removed from wishlist', 'product_id' => $pid]);
     }
 
+    // ───────────────────────────────────────────────────────────────────────
+    // Cart — the same cart_items rows the website reads, so a model added on
+    // the phone is in the browser's cart and the other way round. Lines are
+    // addressed by their row id; every query is scoped by user_id, which is
+    // what stops one account touching another's cart by guessing an id.
+    // ───────────────────────────────────────────────────────────────────────
+
+    // ---- GET /api/cart  (auth) ----
+    elseif ($seg === ['cart'] && $method === 'GET') {
+        $auth = require_auth();
+        respond(200, ['items' => cart_api_items($conn, (int)$auth['sub'])]);
+    }
+
+    // ---- POST /api/cart  (auth)  body: { product_id, quantity } ----
+    elseif ($seg === ['cart'] && $method === 'POST') {
+        $auth   = require_auth();
+        $userId = (int)$auth['sub'];
+        $b      = body();
+        $pid    = (int)($b['product_id'] ?? 0);
+        $qty    = (int)($b['quantity'] ?? 1);
+        if ($pid <= 0) respond(422, ['error' => 'product_id is required']);
+        if ($qty <= 0) $qty = 1;
+
+        $itemId = cart_db_add($conn, $userId, $pid, $qty);
+        if ($itemId === 0) respond(404, ['error' => 'Product not found']);
+
+        $items = cart_api_items($conn, $userId);
+        $line  = null;
+        foreach ($items as $i) { if ($i['id'] === $itemId) { $line = $i; break; } }
+        respond(201, ($line ?? ['id' => $itemId, 'product_id' => $pid, 'quantity' => $qty]) + ['items' => $items]);
+    }
+
+    // ---- PUT /api/cart/{item_id}  (auth)  body: { quantity } ----
+    elseif (count($seg) === 2 && $seg[0] === 'cart' && ctype_digit($seg[1]) && $method === 'PUT') {
+        $auth   = require_auth();
+        $userId = (int)$auth['sub'];
+        $itemId = (int)$seg[1];
+        $b      = body();
+        $qty    = (int)($b['quantity'] ?? 0);
+
+        if (!cart_db_set_qty_by_item($conn, $userId, $itemId, $qty)) {
+            respond(404, ['error' => 'Cart item not found']);
+        }
+        // A quantity of zero removes the line, so report what is actually there.
+        respond(200, ['id' => $itemId, 'quantity' => max(0, $qty), 'items' => cart_api_items($conn, $userId)]);
+    }
+
+    // ---- DELETE /api/cart/{item_id}  (auth) ----
+    elseif (count($seg) === 2 && $seg[0] === 'cart' && ctype_digit($seg[1]) && $method === 'DELETE') {
+        $auth   = require_auth();
+        $userId = (int)$auth['sub'];
+        $itemId = (int)$seg[1];
+        if (!cart_db_remove_item($conn, $userId, $itemId)) respond(404, ['error' => 'Cart item not found']);
+        respond(200, ['message' => 'Removed', 'id' => $itemId, 'items' => cart_api_items($conn, $userId)]);
+    }
+
+    // ---- DELETE /api/cart  (auth) ----
+    elseif ($seg === ['cart'] && $method === 'DELETE') {
+        $auth = require_auth();
+        cart_db_clear($conn, (int)$auth['sub']);
+        respond(200, ['message' => 'Cart cleared', 'items' => []]);
+    }
+
     // ---- fallback ----
     else {
         respond(404, ['error' => 'Route not found', 'method' => $method, 'path' => '/' . $path]);

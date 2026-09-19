@@ -14,7 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 if (!isset($_SESSION['user_id'])) {
     echo json_encode(['ok' => false, 'error' => 'Not logged in']); exit;
 }
-if (empty($_SESSION['cart'])) {
+$cart_items = cart_items($conn);
+if (empty($cart_items)) {
     echo json_encode(['ok' => false, 'error' => 'Cart is empty']); exit;
 }
 
@@ -51,8 +52,8 @@ if (!empty($errs)) {
     echo json_encode(['ok' => false, 'error' => implode(' ', $errs)]); exit;
 }
 
-// Compute amount server-side from session cart (never trust the client amount).
-$total = array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $_SESSION['cart']));
+// Compute amount server-side from the stored cart (never trust the client amount).
+$total = array_sum(array_map(fn($i) => $i['price'] * $i['quantity'], $cart_items));
 
 // Persist shipping data in session so razorpay_verify.php can use it.
 $_SESSION['rzp_pending'] = [

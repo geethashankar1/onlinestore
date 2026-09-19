@@ -31,7 +31,7 @@ if (!razorpay_verify_signature($rzpOrder, $rzpPay, $rzpSig)) {
 
 // 2. Retrieve session data set by razorpay_create.php.
 $pending = $_SESSION['rzp_pending'] ?? null;
-$cart    = $_SESSION['cart']        ?? [];
+$cart    = cart_items($conn);
 
 if (!$pending || empty($cart)) {
     echo json_encode(['ok' => false, 'error' => 'Session expired. Please restart checkout.']); exit;
@@ -53,8 +53,8 @@ if (!$ok) {
     exit;
 }
 
-// 4. Clean up session.
-$_SESSION['cart']             = [];
+// 4. Clean up: the cart is now an order.
+cart_clear($conn);
 $_SESSION['last_order_id']    = $orderId;
 unset($_SESSION['rzp_pending']);
 
