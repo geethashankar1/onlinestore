@@ -212,6 +212,13 @@ try {
             $conn->rollback();
             respond(500, ['error' => 'Order failed'] + (API_DEBUG ? ['detail' => $e->getMessage()] : []));
         }
+
+        // The cart is shared with the website, so leaving it full after a
+        // successful order would show the browser a cart that was already
+        // bought. Outside the transaction on purpose: a failure to tidy up
+        // must not undo a placed order.
+        cart_db_clear($conn, $userId);
+
         respond(201, ['order_id' => $orderId, 'total_amount' => round($total, 2), 'status' => 'Pending']);
     }
 
@@ -225,12 +232,38 @@ try {
         $res = $stmt->get_result();
         $orders = [];
         while ($r = $res->fetch_assoc()) {
-            $orders[] = [
+            $orders[(int)$r['id']] = [
                 'id' => (int)$r['id'], 'total_amount' => (float)$r['total_amount'],
                 'shipping_address' => $r['shipping_address'], 'status' => $r['status'], 'created_at' => $r['created_at'],
+                'items' => [],
             ];
         }
-        respond(200, ['orders' => $orders]);
+
+        // Lines for every order in one query — the website shows what was
+        // bought, and an order card that cannot say "2 items" is no history at
+        // all. price_at_purchase is what they paid, not today's price.
+        if ($orders) {
+            $ids  = implode(',', array_map('intval', array_keys($orders)));
+            $rows = $conn->query(
+                "SELECT oi.order_id, oi.product_id, oi.quantity, oi.price_at_purchase, p.name
+                   FROM order_items oi
+                   JOIN products p ON p.id = oi.product_id
+                  WHERE oi.order_id IN ($ids)
+                  ORDER BY oi.id"
+            );
+            if ($rows) {
+                while ($r = $rows->fetch_assoc()) {
+                    $orders[(int)$r['order_id']]['items'][] = [
+                        'product_id' => (int)$r['product_id'],
+                        'name'       => $r['name'],
+                        'quantity'   => (int)$r['quantity'],
+                        'price'      => (float)$r['price_at_purchase'],
+                    ];
+                }
+            }
+        }
+
+        respond(200, ['orders' => array_values($orders)]);
     }
 
     // ---- GET /api/wishlist  (auth) — current user's wishlist with product info ----
